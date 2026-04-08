@@ -5,8 +5,8 @@ const POOL_BUY_IN = 10;
 
 export default function Leaderboard({ standings }: { standings: ParticipantScore[] }) {
   const totalPot = standings.length * POOL_BUY_IN;
-  const tied1stCount = standings.filter((s) => s.rank === 1 && s.totalEarnings > 0).length;
-  const projectedPayout = tied1stCount > 0 ? totalPot / tied1stCount : totalPot;
+  const tied1stCount = standings.filter((s) => s.rank === 1).length;
+  const projectedPayout = totalPot / tied1stCount;
 
   return (
     <div className="overflow-x-auto">
@@ -22,7 +22,7 @@ export default function Leaderboard({ standings }: { standings: ParticipantScore
         <tbody>
           {standings.map((s, i) => {
             const isTop3 = s.rank <= 3 && s.totalEarnings > 0;
-            const isLeading = s.rank === 1 && s.totalEarnings > 0;
+            const isLeading = s.rank === 1;
             return (
               <tr
                 key={s.participant.id}
