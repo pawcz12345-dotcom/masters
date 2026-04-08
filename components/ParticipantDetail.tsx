@@ -1,6 +1,32 @@
 'use client';
 
+import { useState } from 'react';
 import type { ParticipantScore } from '@/lib/types';
+
+// Map ESPN stat names → friendly labels and display order
+const STAT_MAP: Record<string, string> = {
+  R1: 'R1',
+  R2: 'R2',
+  R3: 'R3',
+  R4: 'R4',
+  scoringAverage: 'Avg',
+  drivingDistance: 'Driving Dist',
+  drivingAccuracy: 'FIR %',
+  fairwaysInRegulation: 'FIR %',
+  greensInRegulation: 'GIR %',
+  puttingAverage: 'Putts/Rnd',
+  totalPutts: 'Total Putts',
+  eagles: 'Eagles',
+  birdies: 'Birdies',
+  bogeys: 'Bogeys',
+  doubleBogeys: 'Doubles+',
+  doubles: 'Doubles+',
+  sandSaves: 'Sand Saves',
+  scrambling: 'Scrambling',
+};
+
+// Stats shown prominently as round scores vs in the grid
+const ROUND_STATS = new Set(['R1', 'R2', 'R3', 'R4']);
 
 interface Props {
   score: ParticipantScore;
@@ -15,6 +41,17 @@ export default function ParticipantDetail({
   totalParticipants,
   tournamentState,
 }: Props) {
+  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set());
+
+  function toggleTier(tierId: string) {
+    setExpandedTiers((prev) => {
+      const next = new Set(prev);
+      if (next.has(tierId)) next.delete(tierId);
+      else next.add(tierId);
+      return next;
+    });
+  }
+
   return (
     <div className="space-y-3">
       {score.picks.map(({ tier, player, liveData }) => {
@@ -22,99 +59,153 @@ export default function ParticipantDetail({
         const ownershipPct = ((pickCount / totalParticipants) * 100).toFixed(1);
         const isCut = liveData?.isCut ?? false;
         const isPreTournament = tournamentState === 'pre';
+        const isExpanded = expandedTiers.has(tier.id);
+
+        // Pull interesting stats from ESPN statistics array
+        const stats = (liveData?.statistics ?? []).filter(
+          (s) => STAT_MAP[s.name] && s.displayValue && s.displayValue !== '--'
+        );
+        const roundStats = stats.filter((s) => ROUND_STATS.has(s.name));
+        const otherStats = stats.filter((s) => !ROUND_STATS.has(s.name));
+        const hasStats = stats.length > 0 && !isPreTournament;
 
         return (
           <div
             key={tier.id}
-            className={`rounded-lg border px-5 py-4 ${
+            className={`rounded-lg border ${
               isCut ? 'border-red-100 bg-red-50' : 'border-gray-200 bg-white'
             }`}
           >
-            {/* Top row: tier label + ownership */}
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                {tier.name}
-              </p>
-              <p className="text-xs text-gray-400">
-                Owned by{' '}
-                <span className="font-medium text-gray-600">
-                  {pickCount}/{totalParticipants}
-                </span>{' '}
-                <span className="text-gray-400">({ownershipPct}%)</span>
-              </p>
-            </div>
-
-            {/* Main row: player name + live stats */}
-            <div className="flex items-center justify-between gap-4">
-              {/* Left: headshot + player name */}
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
-                  alt={liveData?.displayName ?? player.displayName}
-                  width={48}
-                  height={48}
-                  className={`rounded-full object-cover bg-gray-100 shrink-0 ${isCut ? 'grayscale opacity-50' : ''}`}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <p className={`text-base font-semibold ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                  {liveData?.displayName ?? player.displayName}
-                  {isCut && (
-                    <span className="ml-2 text-xs font-bold text-red-500 no-underline not-italic">CUT</span>
-                  )}
+            {/* Main card */}
+            <div className="px-5 py-4">
+              {/* Top row: tier label + ownership */}
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  {tier.name}
+                </p>
+                <p className="text-xs text-gray-400">
+                  Owned by{' '}
+                  <span className="font-medium text-gray-600">
+                    {pickCount}/{totalParticipants}
+                  </span>{' '}
+                  <span className="text-gray-400">({ownershipPct}%)</span>
                 </p>
               </div>
 
-              {/* Right: live stats */}
-              {isPreTournament ? (
-                <p className="text-sm text-gray-300 tabular-nums shrink-0">Pre-Tournament</p>
-              ) : liveData ? (
-                <div className="flex items-center gap-5 shrink-0">
-                  {/* Position */}
-                  <div className="text-center">
-                    <p className="text-xs text-gray-400 mb-0.5">Pos</p>
-                    <p className="text-sm font-semibold text-gray-800 tabular-nums">
-                      {isCut ? '—' : (liveData.position || '—')}
+              {/* Main row: headshot + name + live stats */}
+              <div className="flex items-center justify-between gap-4">
+                {/* Left: headshot + player name */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
+                    alt={liveData?.displayName ?? player.displayName}
+                    width={48}
+                    height={48}
+                    className={`rounded-full object-cover bg-gray-100 shrink-0 ${isCut ? 'grayscale opacity-50' : ''}`}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <div className="min-w-0">
+                    <p className={`text-base font-semibold leading-tight ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                      {liveData?.displayName ?? player.displayName}
+                      {isCut && (
+                        <span className="ml-2 text-xs font-bold text-red-500 no-underline not-italic">CUT</span>
+                      )}
                     </p>
-                  </div>
-
-                  {/* Score */}
-                  <div className="text-center">
-                    <p className="text-xs text-gray-400 mb-0.5">Score</p>
-                    <p className={`text-sm font-semibold tabular-nums ${
-                      isCut ? 'text-gray-400' :
-                      liveData.scoreDisplay.startsWith('-') ? 'text-red-600' :
-                      liveData.scoreDisplay === 'E' ? 'text-gray-700' : 'text-gray-500'
-                    }`}>
-                      {liveData.scoreDisplay || 'E'}
-                    </p>
-                  </div>
-
-                  {/* Thru */}
-                  <div className="text-center">
-                    <p className="text-xs text-gray-400 mb-0.5">Thru</p>
-                    <p className="text-sm font-semibold text-gray-800 tabular-nums">
-                      {liveData.state === 'in' && liveData.thru > 0
-                        ? liveData.thru
-                        : liveData.state === 'post'
-                        ? 'F'
-                        : '—'}
-                    </p>
-                  </div>
-
-                  {/* Projected earnings */}
-                  <div className="text-center">
-                    <p className="text-xs text-gray-400 mb-0.5">Earnings</p>
-                    <p className={`text-sm font-semibold tabular-nums ${
-                      liveData.projectedEarnings > 0 ? 'text-green-700' : 'text-gray-400'
-                    }`}>
-                      {liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
-                    </p>
+                    {/* Round scores inline under name */}
+                    {roundStats.length > 0 && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {roundStats.map((s) => (
+                          <span key={s.name} className="text-xs text-gray-400">
+                            <span className="text-gray-300">{s.name} </span>
+                            <span className="font-medium text-gray-600">{s.displayValue}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <p className="text-sm text-gray-300 shrink-0">No data</p>
-              )}
+
+                {/* Right: live stats + expand button */}
+                <div className="flex items-center gap-3 shrink-0">
+                  {isPreTournament ? (
+                    <p className="text-sm text-gray-300 tabular-nums">Pre-Tournament</p>
+                  ) : liveData ? (
+                    <div className="flex items-center gap-5">
+                      <div className="text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">Pos</p>
+                        <p className="text-sm font-semibold text-gray-800 tabular-nums">
+                          {isCut ? '—' : (liveData.position || '—')}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">Score</p>
+                        <p className={`text-sm font-semibold tabular-nums ${
+                          isCut ? 'text-gray-400' :
+                          liveData.scoreDisplay.startsWith('-') ? 'text-red-600' :
+                          liveData.scoreDisplay === 'E' ? 'text-gray-700' : 'text-gray-500'
+                        }`}>
+                          {liveData.scoreDisplay || 'E'}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">Thru</p>
+                        <p className="text-sm font-semibold text-gray-800 tabular-nums">
+                          {liveData.state === 'in' && liveData.thru > 0
+                            ? liveData.thru
+                            : liveData.state === 'post'
+                            ? 'F'
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">Earnings</p>
+                        <p className={`text-sm font-semibold tabular-nums ${
+                          liveData.projectedEarnings > 0 ? 'text-green-700' : 'text-gray-400'
+                        }`}>
+                          {liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-300">No data</p>
+                  )}
+
+                  {/* Expand button — only shown when stats exist */}
+                  {hasStats && (
+                    <button
+                      onClick={() => toggleTier(tier.id)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label={isExpanded ? 'Hide stats' : 'Show stats'}
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
+
+            {/* Expanded stats panel */}
+            {isExpanded && hasStats && otherStats.length > 0 && (
+              <div className="border-t border-gray-100 px-5 py-3 bg-gray-50 rounded-b-lg">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-6 gap-y-3">
+                  {otherStats.map((s) => (
+                    <div key={s.name} className="text-center">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">
+                        {STAT_MAP[s.name]}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-700 tabular-nums">
+                        {s.displayValue}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

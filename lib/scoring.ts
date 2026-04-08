@@ -135,6 +135,7 @@ export function computeStandings(
           thru: competitor.status?.thru ?? 0,
           state: competitor.status?.type?.state ?? 'pre',
           isCut,
+          statistics: competitor.statistics ?? [],
         };
 
         totalEarnings += projected;
