@@ -1,5 +1,8 @@
-import Link from 'next/link';
+'use client';
+
+import { useState, useMemo } from 'react';
 import type { ParticipantScore, ESPNTournamentStatus } from '@/lib/types';
+import LeaderboardRow from './LeaderboardRow';
 
 const POOL_BUY_IN = 10;
 
@@ -33,6 +36,16 @@ function InfoTooltip({ text }: { text: string }) {
   );
 }
 
+type SortKey = 'rank' | 'cuts' | 'ownership' | 'score' | 'evPurse' | 'livePurse' | 'payout';
+
+function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
+  return (
+    <span className="inline-block ml-1 align-middle opacity-60">
+      {active ? (dir === 'asc' ? '↑' : '↓') : <span className="text-gray-300">↕</span>}
+    </span>
+  );
+}
+
 export default function Leaderboard({
   standings,
   status,
@@ -40,35 +53,90 @@ export default function Leaderboard({
   standings: ParticipantScore[];
   status: ESPNTournamentStatus;
 }) {
+  const [sortKey, setSortKey] = useState<SortKey>('rank');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
   const totalPot = standings.length * POOL_BUY_IN;
-  const tied1stCount = standings.filter((s) => s.rank === 1).length;
-  const projectedPayout = totalPot / tied1stCount;
   const totalParticipants = standings.length;
 
   const cutDay = status.period > 2;
   const tournamentOver = status.state === 'post' && status.period >= 4;
 
   const cutsLabel = cutDay ? 'Cuts' : 'Projected Cuts';
-  const purseLabel = tournamentOver ? 'Purse' : 'Projected Purse';
   const payoutLabel = tournamentOver ? 'Payout' : 'Projected Payout';
 
-  // Build player ownership map
-  const ownershipCount = new Map<string, number>();
-  for (const s of standings) {
-    for (const pick of s.picks) {
-      const id = pick.player.id;
-      ownershipCount.set(id, (ownershipCount.get(id) ?? 0) + 1);
+  // Build ownership maps
+  const ownershipCount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of standings) {
+      for (const pick of s.picks) {
+        map.set(pick.player.id, (map.get(pick.player.id) ?? 0) + 1);
+      }
+    }
+    return map;
+  }, [standings]);
+
+  const ownershipByParticipant = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of standings) {
+      let total = 0;
+      for (const pick of s.picks) {
+        const count = ownershipCount.get(pick.player.id) ?? 0;
+        total += (count / totalParticipants) * 100;
+      }
+      map.set(s.participant.id, total);
+    }
+    return map;
+  }, [standings, ownershipCount, totalParticipants]);
+
+  // Augment standings with derived sort values
+  const augmented = useMemo(() => standings.map((s) => {
+    const alive = s.picks.filter((p) => !p.liveData?.isCut).length;
+    const ownership = ownershipByParticipant.get(s.participant.id) ?? 0;
+    return { s, alive, ownership };
+  }), [standings, ownershipByParticipant]);
+
+  const sorted = useMemo(() => {
+    const copy = [...augmented];
+    copy.sort((a, b) => {
+      let diff = 0;
+      switch (sortKey) {
+        case 'rank':      diff = a.s.rank - b.s.rank; break;
+        case 'cuts':      diff = b.alive - a.alive; break;
+        case 'ownership': diff = b.ownership - a.ownership; break;
+        case 'score':     diff = a.s.totalScoreToPar - b.s.totalScoreToPar; break;
+        case 'evPurse':   diff = b.s.oddsEV - a.s.oddsEV; break;
+        case 'livePurse': diff = b.s.totalEarnings - a.s.totalEarnings; break;
+        case 'payout':    diff = a.s.rank - b.s.rank; break;
+      }
+      return sortDir === 'asc' ? diff : -diff;
+    });
+    return copy;
+  }, [augmented, sortKey, sortDir]);
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
     }
   }
 
-  const ownershipByParticipant = new Map<string, number>();
-  for (const s of standings) {
-    let total = 0;
-    for (const pick of s.picks) {
-      const count = ownershipCount.get(pick.player.id) ?? 0;
-      total += (count / totalParticipants) * 100;
-    }
-    ownershipByParticipant.set(s.participant.id, total);
+  // Compute projected payout based on rank-1 participants in current sort (use original standings for payout)
+  const tied1stCount = standings.filter((s) => s.rank === 1).length;
+  const projectedPayout = totalPot / tied1stCount;
+
+  function th(key: SortKey, label: React.ReactNode, className?: string) {
+    return (
+      <th
+        className={`pb-3 pr-6 cursor-pointer select-none hover:text-gray-700 transition-colors whitespace-nowrap ${className ?? ''}`}
+        onClick={() => handleSort(key)}
+      >
+        {label}
+        <SortIcon active={sortKey === key} dir={sortDir} />
+      </th>
+    );
   }
 
   return (
@@ -76,105 +144,83 @@ export default function Leaderboard({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500 text-xs uppercase tracking-wide">
-            <th className="pb-3 pr-6 w-12">Rank</th>
+            {th('rank', 'Rank', 'w-12')}
             <th className="pb-3 pr-6">Participant</th>
-            <th className="pb-3 pr-6 text-center whitespace-nowrap">
-              {cutsLabel}
-              <InfoTooltip text="X/10 — how many of your picked players are projected to survive the cut. Goes from projected during Rounds 1–2 to confirmed after the cut is made." />
-            </th>
-            <th className="pb-3 pr-6 text-right whitespace-nowrap">
-              Ownership
-              <InfoTooltip text="Sum of each pick's ownership % across all participants. For example, if Rory was picked by 3 of 11 players, his ownership is 27.3%. Your total is the sum across all 10 picks. Lower = more contrarian lineup." />
-            </th>
-            <th className="pb-3 pr-6 text-right whitespace-nowrap">
-              Score
-              <InfoTooltip text="Combined score vs par for all 10 of your picks. Calculated as the sum of each player's current score-to-par. Red = under par (good), gray = over par." />
-            </th>
-            <th className="pb-3 pr-6 text-right whitespace-nowrap">
-              Live Purse
-              <InfoTooltip text="What your picks would earn if the tournament ended right now, based on current leaderboard positions. This drives your pool rank and projected payout." />
-            </th>
-            <th className="pb-3 pr-6 text-right whitespace-nowrap">
-              EV Purse
-              <InfoTooltip text="Odds-based expected purse. Uses betting market win probabilities (vig stripped), then runs a Harville simulation to estimate each player's probability of finishing in every position. EV = Σ P(finish k) × purse[k]. Updates every 2 hours from live odds." />
-            </th>
-            <th className="pb-3 text-right whitespace-nowrap">
-              {payoutLabel}
-              <InfoTooltip text={`Winner-take-all pool prize based on current Live Purse standings. Total pot is $${totalPot} (${totalParticipants} players × $${POOL_BUY_IN}). Split evenly if tied for 1st.`} />
-            </th>
+            {th(
+              'cuts',
+              <>
+                {cutsLabel}
+                <InfoTooltip text="X/10 — how many of your picked players are projected to survive the cut. Goes from projected during Rounds 1–2 to confirmed after the cut is made." />
+              </>,
+              'text-center'
+            )}
+            {th(
+              'ownership',
+              <>
+                Ownership
+                <InfoTooltip text="Sum of each pick's ownership % across all participants. For example, if Rory was picked by 3 of 11 players, his ownership is 27.3%. Your total is the sum across all 10 picks. Lower = more contrarian lineup." />
+              </>,
+              'text-right'
+            )}
+            {th(
+              'score',
+              <>
+                Score
+                <InfoTooltip text="Combined score vs par for all 10 of your picks. Calculated as the sum of each player's current score-to-par. Red = under par (good), gray = over par." />
+              </>,
+              'text-right'
+            )}
+            {th(
+              'evPurse',
+              <>
+                EV Purse
+                <InfoTooltip text="Odds-based expected purse. Uses betting market win probabilities (vig stripped), then runs a Harville simulation to estimate each player's probability of finishing in every position. EV = Σ P(finish k) × purse[k]. Updates every 2 hours from live odds." />
+              </>,
+              'text-right'
+            )}
+            {th(
+              'livePurse',
+              <>
+                Live Purse
+                <InfoTooltip text="What your picks would earn if the tournament ended right now, based on current leaderboard positions. This drives your pool rank and projected payout." />
+              </>,
+              'text-right'
+            )}
+            {th(
+              'payout',
+              <>
+                {payoutLabel}
+                <InfoTooltip text={`Winner-take-all pool prize based on current Live Purse standings. Total pot is $${totalPot} (${totalParticipants} players × $${POOL_BUY_IN}). Split evenly if tied for 1st.`} />
+              </>,
+              'text-right'
+            )}
           </tr>
         </thead>
         <tbody>
-          {standings.map((s, i) => {
+          {sorted.map(({ s, alive }, i) => {
             const isTop3 = s.rank <= 3 && s.totalEarnings > 0;
             const isLeading = s.rank === 1;
-
-            const alive = s.picks.filter((p) => !p.liveData?.isCut).length;
             const total = s.picks.length;
             const cutsColor =
               alive === total ? 'text-green-600' : alive === 0 ? 'text-red-500' : 'text-yellow-600';
-
             const ownership = ownershipByParticipant.get(s.participant.id) ?? 0;
+            const ownershipDisplay = `${ownership.toFixed(1)}%`;
 
             return (
-              <tr
+              <LeaderboardRow
                 key={s.participant.id}
-                className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                  i === 0 && s.totalEarnings > 0 ? 'bg-yellow-50' : ''
-                }`}
-              >
-                <td className="py-4 pr-6">
-                  <span className={`font-semibold ${isTop3 ? 'text-yellow-600' : 'text-gray-600'}`}>
-                    {s.rankDisplay}
-                  </span>
-                </td>
-                <td className="py-4 pr-6">
-                  <Link
-                    href={`/participant/${s.participant.slug}`}
-                    className="font-medium text-gray-900 hover:text-green-700 hover:underline"
-                  >
-                    {s.participant.teamName ?? s.participant.name}
-                  </Link>
-                </td>
-                <td className={`py-4 pr-6 text-center font-medium tabular-nums ${cutsColor}`}>
-                  {alive}/{total}
-                </td>
-                <td className="py-4 pr-6 text-right font-medium tabular-nums text-gray-600">
-                  {ownership.toFixed(1)}%
-                </td>
-                <td className="py-4 pr-6 text-right font-medium tabular-nums">
-                  {status.state === 'pre' ? (
-                    <span className="text-gray-300">—</span>
-                  ) : (
-                    <span className={s.totalScoreToPar < 0 ? 'text-red-600' : s.totalScoreToPar > 0 ? 'text-gray-500' : 'text-gray-700'}>
-                      {s.totalScoreDisplay}
-                    </span>
-                  )}
-                </td>
-                {/* Live Purse — drives rank + payout */}
-                <td className="py-4 pr-6 text-right font-medium tabular-nums">
-                  {s.totalEarnings > 0 ? (
-                    <span className="text-green-700">{s.totalEarningsDisplay}</span>
-                  ) : (
-                    <span className="text-gray-400">$0</span>
-                  )}
-                </td>
-                {/* EV Purse — supplementary odds-based view */}
-                <td className="py-4 pr-6 text-right font-medium tabular-nums">
-                  {s.oddsEV > 0 ? (
-                    <span className="text-blue-600">{s.oddsEVDisplay}</span>
-                  ) : (
-                    <span className="text-gray-300">—</span>
-                  )}
-                </td>
-                <td className="py-4 text-right font-medium tabular-nums">
-                  {isLeading ? (
-                    <span className="text-yellow-600">${projectedPayout.toLocaleString()}</span>
-                  ) : (
-                    <span className="text-gray-300">—</span>
-                  )}
-                </td>
-              </tr>
+                s={s}
+                index={i}
+                projectedPayout={projectedPayout}
+                isTop3={isTop3}
+                isLeading={isLeading}
+                cutsColor={cutsColor}
+                alive={alive}
+                total={total}
+                ownershipDisplay={ownershipDisplay}
+                status={status}
+                colSpan={8}
+              />
             );
           })}
         </tbody>
