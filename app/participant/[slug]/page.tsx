@@ -41,9 +41,20 @@ export default async function ParticipantPage({
   const myScore = standings.find((s) => s.participant.slug === slug);
   if (!myScore) notFound();
 
+  // Build ownership count: playerId → how many participants picked them
+  const ownershipCount = new Map<string, number>();
+  for (const s of standings) {
+    for (const pick of s.picks) {
+      const id = pick.player.id;
+      ownershipCount.set(id, (ownershipCount.get(id) ?? 0) + 1);
+    }
+  }
+
+  const totalParticipants = standings.length;
+
   return (
     <main className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Back link */}
         <Link
           href="/"
@@ -53,7 +64,7 @@ export default async function ParticipantPage({
         </Link>
 
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 mt-4">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -71,15 +82,25 @@ export default async function ParticipantPage({
               <p className="text-3xl font-bold text-green-700 tabular-nums">
                 {myScore.totalEarnings > 0 ? myScore.totalEarningsDisplay : '$0'}
               </p>
-              <p className="text-sm text-gray-400 mt-1">
-                {myScore.rankDisplay} of {standings.length}
+              <p className="text-sm text-gray-500 mt-1">
+                <span className="font-medium">{myScore.rankDisplay}</span> of {totalParticipants}
               </p>
+              {espn.status.state !== 'pre' && (
+                <p className={`text-sm font-medium mt-0.5 ${myScore.totalScoreToPar < 0 ? 'text-red-600' : myScore.totalScoreToPar > 0 ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {myScore.totalScoreDisplay} combined
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Picks */}
-        <ParticipantDetail score={myScore} />
+        <ParticipantDetail
+          score={myScore}
+          ownershipCount={ownershipCount}
+          totalParticipants={totalParticipants}
+          tournamentState={espn.status.state}
+        />
       </div>
     </main>
   );
