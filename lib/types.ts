@@ -22,6 +22,8 @@ export interface Participant {
   id: string;
   slug: string;
   name: string;
+  teamName?: string;
+  tiebreaker?: string;
   picks: Pick[];
 }
 

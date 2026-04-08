@@ -38,6 +38,9 @@ export default function Leaderboard({ standings }: { standings: ParticipantScore
                   >
                     {s.participant.name}
                   </Link>
+                  {s.participant.teamName && (
+                    <p className="text-xs text-gray-400 mt-0.5">{s.participant.teamName}</p>
+                  )}
                 </td>
                 <td className="py-4 text-right font-medium tabular-nums">
                   {s.totalEarnings > 0 ? (
