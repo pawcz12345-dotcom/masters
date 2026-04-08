@@ -57,8 +57,11 @@ export default async function ParticipantPage({
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {myScore.participant.name}
+                {myScore.participant.teamName ?? myScore.participant.name}
               </h1>
+              {myScore.participant.teamName && (
+                <p className="text-sm text-gray-400 mt-0.5">{myScore.participant.name}</p>
+              )}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 <TournamentStatus status={espn.status} />
                 <LastUpdated lastFetched={espn.lastFetched} />
