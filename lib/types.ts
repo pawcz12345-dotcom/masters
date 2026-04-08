@@ -95,8 +95,12 @@ export interface PickResult {
 
 export interface ParticipantScore {
   participant: Participant;
+  /** Position-based: what you'd earn if tournament ended now. Used for rank + payout. */
   totalEarnings: number;
   totalEarningsDisplay: string;
+  /** Odds-based expected value via Harville MC. Supplementary display only. */
+  oddsEV: number;
+  oddsEVDisplay: string;
   totalScoreToPar: number;
   totalScoreDisplay: string;
   picks: PickResult[];

@@ -91,12 +91,16 @@ export default function Leaderboard({
               <InfoTooltip text="Combined score vs par for all 10 of your picks. Calculated as the sum of each player's current score-to-par. Red = under par (good), gray = over par." />
             </th>
             <th className="pb-3 pr-6 text-right whitespace-nowrap">
-              {purseLabel}
-              <InfoTooltip text="Total projected tournament prize money your picks would earn based on their current leaderboard positions. Uses the Masters purse payout schedule with ties split evenly. Updates to final earnings after Round 4." />
+              Live Purse
+              <InfoTooltip text="What your picks would earn if the tournament ended right now, based on current leaderboard positions. This drives your pool rank and projected payout." />
+            </th>
+            <th className="pb-3 pr-6 text-right whitespace-nowrap">
+              EV Purse
+              <InfoTooltip text="Odds-based expected purse. Uses betting market win probabilities (vig stripped), then runs a Harville simulation to estimate each player's probability of finishing in every position. EV = Σ P(finish k) × purse[k]. Updates every 2 hours from live odds." />
             </th>
             <th className="pb-3 text-right whitespace-nowrap">
               {payoutLabel}
-              <InfoTooltip text={`Winner-take-all pool prize. Total pot is $${totalPot} (${totalParticipants} players × $${POOL_BUY_IN}). If multiple participants are tied for 1st place, the pot is split evenly between them.`} />
+              <InfoTooltip text={`Winner-take-all pool prize based on current Live Purse standings. Total pot is $${totalPot} (${totalParticipants} players × $${POOL_BUY_IN}). Split evenly if tied for 1st.`} />
             </th>
           </tr>
         </thead>
@@ -147,11 +151,20 @@ export default function Leaderboard({
                     </span>
                   )}
                 </td>
+                {/* Live Purse — drives rank + payout */}
                 <td className="py-4 pr-6 text-right font-medium tabular-nums">
                   {s.totalEarnings > 0 ? (
                     <span className="text-green-700">{s.totalEarningsDisplay}</span>
                   ) : (
                     <span className="text-gray-400">$0</span>
+                  )}
+                </td>
+                {/* EV Purse — supplementary odds-based view */}
+                <td className="py-4 pr-6 text-right font-medium tabular-nums">
+                  {s.oddsEV > 0 ? (
+                    <span className="text-blue-600">{s.oddsEVDisplay}</span>
+                  ) : (
+                    <span className="text-gray-300">—</span>
                   )}
                 </td>
                 <td className="py-4 text-right font-medium tabular-nums">

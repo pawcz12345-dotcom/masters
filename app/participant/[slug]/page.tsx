@@ -83,15 +83,26 @@ export default async function ParticipantPage({
                 <LastUpdated lastFetched={espn.lastFetched} />
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-green-700 tabular-nums">
-                {myScore.totalEarnings > 0 ? myScore.totalEarningsDisplay : '$0'}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
+            <div className="text-right space-y-1">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Live Purse</p>
+                <p className="text-2xl font-bold text-green-700 tabular-nums">
+                  {myScore.totalEarnings > 0 ? myScore.totalEarningsDisplay : '$0'}
+                </p>
+              </div>
+              {myScore.oddsEV > 0 && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">EV Purse</p>
+                  <p className="text-lg font-semibold text-blue-600 tabular-nums">
+                    {myScore.oddsEVDisplay}
+                  </p>
+                </div>
+              )}
+              <p className="text-sm text-gray-500">
                 <span className="font-medium">{myScore.rankDisplay}</span> of {totalParticipants}
               </p>
               {espn.status.state !== 'pre' && (
-                <p className={`text-sm font-medium mt-0.5 ${myScore.totalScoreToPar < 0 ? 'text-red-600' : myScore.totalScoreToPar > 0 ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm font-medium ${myScore.totalScoreToPar < 0 ? 'text-red-600' : myScore.totalScoreToPar > 0 ? 'text-gray-400' : 'text-gray-600'}`}>
                   {myScore.totalScoreDisplay} combined
                 </p>
               )}

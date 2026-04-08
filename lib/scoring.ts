@@ -95,6 +95,7 @@ export function computeStandings(
     });
 
     let totalEarnings = 0;
+    let totalOddsEV = 0;
 
     const pickResults = sortedPicks.map((pick) => {
       const player = playerMap.get(pick.playerId) ?? null;
@@ -113,10 +114,10 @@ export function computeStandings(
 
       if (competitor) {
         const earnings = competitor.earnings ?? 0;
-        // Use odds-based EV when available, fall back to position-based
+        // Position-based projected (used for ranking + payout)
         const projected = isTournamentComplete
           ? earnings
-          : (oddsEV?.get(player.espnId) ?? projectedEarnings.get(player.espnId) ?? 0);
+          : (projectedEarnings.get(player.espnId) ?? 0);
         const isCut =
           competitor.status?.type?.state === 'post' &&
           status.period > 2 &&
@@ -137,6 +138,11 @@ export function computeStandings(
         };
 
         totalEarnings += projected;
+        // Odds EV: use when available, fall back to position-based
+        const ev = isTournamentComplete
+          ? earnings
+          : (oddsEV?.get(player.espnId) ?? projected);
+        totalOddsEV += ev;
       }
 
       return { tier, player, liveData };
@@ -165,6 +171,8 @@ export function computeStandings(
       participant,
       totalEarnings,
       totalEarningsDisplay: formatCurrency(totalEarnings),
+      oddsEV: totalOddsEV,
+      oddsEVDisplay: formatCurrency(totalOddsEV),
       totalScoreToPar,
       totalScoreDisplay,
       picks: pickResults,
