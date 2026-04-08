@@ -107,9 +107,9 @@ export default function ParticipantDetail({
               </div>
 
               {/* Main row: headshot + name + live stats */}
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
                 {/* Left: headshot + player name + round scores */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <img
                     src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
                     alt={liveData?.displayName ?? player.displayName}
@@ -139,12 +139,11 @@ export default function ParticipantDetail({
                   </div>
                 </div>
 
-                {/* Right: live stats + expand chevron */}
-                <div className="flex items-center gap-3 shrink-0">
-                  {isPreTournament ? (
-                    <p className="text-sm text-gray-300 tabular-nums">Pre-Tournament</p>
-                  ) : liveData ? (
-                    <div className="flex items-center gap-4">
+                {/* Right: stats + purse + chevron — always show purse */}
+                <div className="flex items-center gap-4 shrink-0">
+                  {/* Game stats — only during/after tournament */}
+                  {!isPreTournament && liveData && (
+                    <>
                       <div className="text-center">
                         <p className="text-xs text-gray-400 mb-0.5">Pos</p>
                         <p className="text-sm font-semibold text-gray-800 tabular-nums">
@@ -169,28 +168,28 @@ export default function ParticipantDetail({
                             : liveData.state === 'post' ? 'F' : '—'}
                         </p>
                       </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Live $</p>
-                        <p className={`text-sm font-semibold tabular-nums ${
-                          liveData.projectedEarnings > 0 ? 'text-green-700' : 'text-gray-400'
-                        }`}>
-                          {liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">EV $</p>
-                        <p className={`text-sm font-semibold tabular-nums ${
-                          liveData.oddsEV > 0 ? 'text-blue-600' : 'text-gray-400'
-                        }`}>
-                          {liveData.oddsEV > 0 ? liveData.oddsEVDisplay : '$0'}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-300">No data</p>
+                    </>
                   )}
 
-                  {/* Always show expand chevron */}
+                  {/* Purse columns — always visible */}
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400 mb-0.5">Live $</p>
+                    <p className={`text-sm font-semibold tabular-nums ${
+                      liveData && liveData.projectedEarnings > 0 ? 'text-green-700' : 'text-gray-300'
+                    }`}>
+                      {liveData && liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400 mb-0.5">EV $</p>
+                    <p className={`text-sm font-semibold tabular-nums ${
+                      liveData && liveData.oddsEV > 0 ? 'text-blue-600' : 'text-gray-300'
+                    }`}>
+                      {liveData && liveData.oddsEV > 0 ? liveData.oddsEVDisplay : '—'}
+                    </p>
+                  </div>
+
+                  {/* Expand chevron */}
                   <button
                     onClick={() => toggleTier(tier.id)}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
