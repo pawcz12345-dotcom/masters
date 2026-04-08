@@ -47,7 +47,7 @@ export default function Leaderboard({
   const payoutLabel = tournamentOver ? 'Payout' : 'Projected Payout';
 
   return (
-    <div className="overflow-x-auto">
+    <div>
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500 text-xs uppercase tracking-wide">
