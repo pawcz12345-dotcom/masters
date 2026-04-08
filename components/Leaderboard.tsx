@@ -112,6 +112,8 @@ export default function Leaderboard({
         case 'livePurse': diff = b.s.totalEarnings - a.s.totalEarnings; break;
         case 'payout':    diff = a.s.rank - b.s.rank; break;
       }
+      // EV tiebreaker: when primary sort is tied, higher EV ranks first
+      if (diff === 0) diff = b.s.oddsEV - a.s.oddsEV;
       return sortDir === 'asc' ? diff : -diff;
     });
     return copy;
