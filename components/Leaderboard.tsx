@@ -6,10 +6,22 @@ const POOL_BUY_IN = 10;
 function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="relative inline-block group align-middle ml-1">
-      <span className="cursor-help text-gray-300 hover:text-gray-500 text-xs font-bold border border-gray-300 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none">
+      <span className="cursor-help text-gray-400 hover:text-gray-600 text-[10px] font-bold border border-gray-400 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none">
         i
       </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded bg-gray-800 px-2 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-10 normal-case tracking-normal font-normal text-left shadow-lg">
+      <span
+        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg"
+        style={{
+          backgroundColor: '#1f2937',
+          color: '#ffffff',
+          fontSize: '12px',
+          fontWeight: 400,
+          textTransform: 'none',
+          letterSpacing: 'normal',
+          textAlign: 'left',
+          lineHeight: '1.4',
+        }}
+      >
         {text}
       </span>
     </span>
@@ -30,9 +42,9 @@ export default function Leaderboard({
   const cutDay = status.period > 2;
   const tournamentOver = status.state === 'post' && status.period >= 4;
 
-  const cutsLabel = cutDay ? 'Cuts' : 'Proj. Cuts';
-  const purseLabel = tournamentOver ? 'Purse' : 'Proj. Purse';
-  const payoutLabel = tournamentOver ? 'Payout' : 'Proj. Payout';
+  const cutsLabel = cutDay ? 'Cuts' : 'Projected Cuts';
+  const purseLabel = tournamentOver ? 'Purse' : 'Projected Purse';
+  const payoutLabel = tournamentOver ? 'Payout' : 'Projected Payout';
 
   return (
     <div className="overflow-x-auto">
