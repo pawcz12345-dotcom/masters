@@ -141,35 +141,34 @@ export default function ParticipantDetail({
 
                 {/* Right: stats + purse + chevron — always show purse */}
                 <div className="flex items-center gap-4 shrink-0">
-                  {/* Game stats — only during/after tournament */}
-                  {!isPreTournament && liveData && (
-                    <>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Pos</p>
-                        <p className="text-sm font-semibold text-gray-800 tabular-nums">
-                          {isCut ? '—' : (liveData.position || '—')}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Score</p>
-                        <p className={`text-sm font-semibold tabular-nums ${
-                          isCut ? 'text-gray-400' :
-                          liveData.scoreDisplay.startsWith('-') ? 'text-red-600' :
-                          liveData.scoreDisplay === 'E' ? 'text-gray-700' : 'text-gray-500'
-                        }`}>
-                          {liveData.scoreDisplay || 'E'}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Thru</p>
-                        <p className="text-sm font-semibold text-gray-800 tabular-nums">
-                          {liveData.state === 'in' && liveData.thru > 0
-                            ? liveData.thru
-                            : liveData.state === 'post' ? 'F' : '—'}
-                        </p>
-                      </div>
-                    </>
-                  )}
+                  {/* Game stats — placeholders pre-tournament */}
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400 mb-0.5">Pos</p>
+                    <p className="text-sm font-semibold tabular-nums text-gray-800">
+                      {isPreTournament ? <span className="text-gray-300">—</span> : isCut ? '—' : (liveData?.position || '—')}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400 mb-0.5">Score</p>
+                    <p className={`text-sm font-semibold tabular-nums ${
+                      isPreTournament ? 'text-gray-300' :
+                      isCut ? 'text-gray-400' :
+                      liveData?.scoreDisplay.startsWith('-') ? 'text-red-600' :
+                      liveData?.scoreDisplay === 'E' ? 'text-gray-700' : 'text-gray-500'
+                    }`}>
+                      {isPreTournament ? '—' : (liveData?.scoreDisplay || 'E')}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400 mb-0.5">Thru</p>
+                    <p className="text-sm font-semibold tabular-nums text-gray-800">
+                      {isPreTournament
+                        ? <span className="text-gray-300">—</span>
+                        : liveData?.state === 'in' && (liveData.thru > 0) ? liveData.thru
+                        : liveData?.state === 'post' ? 'F'
+                        : '—'}
+                    </p>
+                  </div>
 
                   {/* Purse columns — always visible */}
                   <div className="text-center">
