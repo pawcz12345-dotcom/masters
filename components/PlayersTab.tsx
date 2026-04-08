@@ -23,7 +23,7 @@ interface RichPlayer {
   pickedBy: Array<{ name: string; teamName?: string; slug: string }>;
 }
 
-type SortKey = 'pos' | 'tier' | 'score' | 'earnings' | 'ev' | 'cut';
+type SortKey = 'pos' | 'tier' | 'score' | 'earnings' | 'ev' | 'cut' | 'ownership';
 
 function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   return (
@@ -177,6 +177,7 @@ export default function PlayersTab({
         case 'earnings': diff = b.projectedEarnings - a.projectedEarnings; break;
         case 'ev':       diff = b.oddsEV - a.oddsEV; break;
         case 'cut':      diff = b.cutProbability - a.cutProbability; break;
+        case 'ownership': diff = b.pickedBy.length - a.pickedBy.length; break;
       }
       return sortDir === 'asc' ? diff : -diff;
     });
@@ -225,7 +226,7 @@ export default function PlayersTab({
             {th('cut', 'Cut %', 'text-right')}
             {th('earnings', 'Live $', 'text-right')}
             {th('ev', 'EV $', 'text-right')}
-            <th className="pb-3 pr-4 text-right text-xs uppercase tracking-wide text-gray-500">Own%</th>
+            {th('ownership', 'Own%', 'text-right')}
             <th className="pb-3 pr-2 text-right text-xs uppercase tracking-wide text-gray-500">Picked By</th>
           </tr>
         </thead>
