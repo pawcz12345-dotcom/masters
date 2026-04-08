@@ -1,0 +1,19 @@
+name: Revalidate Golf Pool Cache
+
+on:
+  schedule:
+    # Every 15 minutes during Masters week (Apr 9-13, 2026)
+    # Tournament hours approx 11am-8pm ET = 15:00-00:00 UTC
+    - cron: '*/15 15-23 9-13 4 *'
+    - cron: '*/15 0 10-14 4 *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  revalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger cache revalidation
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "x-revalidate-token: ${{ secrets.REVALIDATE_SECRET }}" \
+            "${{ secrets.VERCEL_APP_URL }}/api/revalidate"

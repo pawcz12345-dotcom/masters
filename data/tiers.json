@@ -1,0 +1,16 @@
+{
+  "tournamentId": "masters-2026",
+  "tournamentName": "Masters Tournament 2026",
+  "tiers": [
+    { "id": "tier-1", "name": "Tier 1", "order": 1 },
+    { "id": "tier-2", "name": "Tier 2", "order": 2 },
+    { "id": "tier-3", "name": "Tier 3", "order": 3 },
+    { "id": "tier-4", "name": "Tier 4", "order": 4 },
+    { "id": "tier-5", "name": "Tier 5", "order": 5 },
+    { "id": "tier-6", "name": "Tier 6", "order": 6 },
+    { "id": "tier-7", "name": "Tier 7", "order": 7 },
+    { "id": "tier-8", "name": "Tier 8", "order": 8 },
+    { "id": "tier-9", "name": "Tier 9", "order": 9 },
+    { "id": "tier-10", "name": "Tier 10", "order": 10 }
+  ]
+}

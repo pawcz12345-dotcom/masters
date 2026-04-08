@@ -1,0 +1,21 @@
+{
+  "participants": [
+    {
+      "id": "participant-1",
+      "slug": "example-player",
+      "name": "Example Player",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "scottie-scheffler" },
+        { "tierId": "tier-2", "playerId": "placeholder-tier-2" },
+        { "tierId": "tier-3", "playerId": "placeholder-tier-3" },
+        { "tierId": "tier-4", "playerId": "placeholder-tier-4" },
+        { "tierId": "tier-5", "playerId": "placeholder-tier-5" },
+        { "tierId": "tier-6", "playerId": "placeholder-tier-6" },
+        { "tierId": "tier-7", "playerId": "placeholder-tier-7" },
+        { "tierId": "tier-8", "playerId": "placeholder-tier-8" },
+        { "tierId": "tier-9", "playerId": "placeholder-tier-9" },
+        { "tierId": "tier-10", "playerId": "placeholder-tier-10" }
+      ]
+    }
+  ]
+}

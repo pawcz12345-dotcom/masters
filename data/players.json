@@ -1,0 +1,70 @@
+{
+  "players": [
+    {
+      "id": "scottie-scheffler",
+      "espnId": "4686086",
+      "displayName": "Scottie Scheffler",
+      "tierId": "tier-1"
+    },
+    {
+      "id": "rory-mcilroy",
+      "espnId": "3470",
+      "displayName": "Rory McIlroy",
+      "tierId": "tier-1"
+    },
+    {
+      "id": "placeholder-tier-2",
+      "espnId": "0",
+      "displayName": "TBD - Tier 2",
+      "tierId": "tier-2"
+    },
+    {
+      "id": "placeholder-tier-3",
+      "espnId": "0",
+      "displayName": "TBD - Tier 3",
+      "tierId": "tier-3"
+    },
+    {
+      "id": "placeholder-tier-4",
+      "espnId": "0",
+      "displayName": "TBD - Tier 4",
+      "tierId": "tier-4"
+    },
+    {
+      "id": "placeholder-tier-5",
+      "espnId": "0",
+      "displayName": "TBD - Tier 5",
+      "tierId": "tier-5"
+    },
+    {
+      "id": "placeholder-tier-6",
+      "espnId": "0",
+      "displayName": "TBD - Tier 6",
+      "tierId": "tier-6"
+    },
+    {
+      "id": "placeholder-tier-7",
+      "espnId": "0",
+      "displayName": "TBD - Tier 7",
+      "tierId": "tier-7"
+    },
+    {
+      "id": "placeholder-tier-8",
+      "espnId": "0",
+      "displayName": "TBD - Tier 8",
+      "tierId": "tier-8"
+    },
+    {
+      "id": "placeholder-tier-9",
+      "espnId": "0",
+      "displayName": "TBD - Tier 9",
+      "tierId": "tier-9"
+    },
+    {
+      "id": "placeholder-tier-10",
+      "espnId": "0",
+      "displayName": "TBD - Tier 10",
+      "tierId": "tier-10"
+    }
+  ]
+}
