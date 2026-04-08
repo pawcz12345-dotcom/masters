@@ -42,7 +42,7 @@ export default async function Home() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Standings — {standings.length} participants
           </h2>
-          <Leaderboard standings={standings} />
+          <Leaderboard standings={standings} status={espn.status} />
         </div>
 
         <p className="text-center text-xs text-gray-300 mt-6">
