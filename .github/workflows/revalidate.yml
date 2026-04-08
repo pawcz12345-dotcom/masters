@@ -2,9 +2,9 @@ name: Revalidate Golf Pool Cache
 
 on:
   schedule:
-    # Every 15 minutes during Masters week (Apr 9-13, 2026)
-    - cron: '*/15 15-23 9-13 4 *'
-    - cron: '*/15 0 10-14 4 *'
+    # Every 5 minutes during Masters week (Apr 9-13, 2026), 11am-midnight ET (15-04 UTC)
+    - cron: '*/5 15-23 9-13 4 *'
+    - cron: '*/5 0-4 10-14 4 *'
   workflow_dispatch:
 
 jobs:

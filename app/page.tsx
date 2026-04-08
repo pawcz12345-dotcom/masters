@@ -15,6 +15,7 @@ import r4Raw from '@/data/snapshots/r4.json';
 import TabView from '@/components/TabView';
 import TournamentStatus from '@/components/TournamentStatus';
 import LastUpdated from '@/components/LastUpdated';
+import AutoRefresh from '@/components/AutoRefresh';
 import type { Tier, Player, Participant, PurseEntry, RoundSnapshot, RoundData } from '@/lib/types';
 
 const ROUND_LABELS: Record<number, string> = {
@@ -88,8 +89,11 @@ export default async function Home() {
     cutProbRecord,
   };
 
+  const isLive = espn.status.state === 'in';
+
   return (
     <main className="min-h-screen bg-gray-50">
+      <AutoRefresh enabled={isLive} />
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
