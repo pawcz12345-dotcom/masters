@@ -23,7 +23,7 @@ interface RichPlayer {
   pickedBy: Array<{ name: string; teamName?: string; slug: string }>;
 }
 
-type SortKey = 'pos' | 'score' | 'earnings' | 'ev' | 'cut';
+type SortKey = 'pos' | 'tier' | 'score' | 'earnings' | 'ev' | 'cut';
 
 function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   return (
@@ -167,6 +167,7 @@ export default function PlayersTab({
       let diff = 0;
       switch (sortKey) {
         case 'pos':      diff = a.sortOrder - b.sortOrder; break;
+        case 'tier':     diff = (a.tier?.order ?? 99) - (b.tier?.order ?? 99); break;
         case 'score': {
           const aV = a.scoreDisplay === 'E' ? 0 : parseFloat(a.scoreDisplay) || 0;
           const bV = b.scoreDisplay === 'E' ? 0 : parseFloat(b.scoreDisplay) || 0;
@@ -218,6 +219,7 @@ export default function PlayersTab({
           <tr className="border-b border-gray-200 text-left">
             {th('pos', 'Pos', 'w-12')}
             <th className="pb-3 pr-4 text-xs uppercase tracking-wide text-gray-500">Player</th>
+            {th('tier', 'Tier', 'text-center')}
             {th('score', 'Score', 'text-right')}
             <th className="pb-3 pr-4 text-right text-xs uppercase tracking-wide text-gray-500">Thru</th>
             {th('cut', 'Cut %', 'text-right')}
@@ -260,15 +262,21 @@ export default function PlayersTab({
                         className={`rounded-full object-cover bg-gray-100 shrink-0 ${p.isCut ? 'grayscale' : ''}`}
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
-                      <div>
-                        <p className={`font-medium text-gray-900 whitespace-nowrap ${p.isCut ? 'line-through' : ''}`}>
-                          {p.displayName}
-                        </p>
-                        {p.tier && (
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">{p.tier.name}</p>
-                        )}
-                      </div>
+                      <p className={`font-medium text-gray-900 whitespace-nowrap ${p.isCut ? 'line-through' : ''}`}>
+                        {p.displayName}
+                      </p>
                     </div>
+                  </td>
+
+                  {/* Tier */}
+                  <td className="py-3 pr-4 text-center">
+                    {p.tier ? (
+                      <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {p.tier.name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
                   </td>
 
                   {/* Score */}
@@ -360,7 +368,7 @@ export default function PlayersTab({
                 {/* Expanded round scores row */}
                 {isExpanded && (
                   <tr key={`${p.espnId}-expanded`} className={`border-b border-gray-100 ${inPool ? 'bg-green-50' : 'bg-gray-50'}`}>
-                    <td colSpan={9} className="px-4 pb-3 pt-1">
+                    <td colSpan={10} className="px-4 pb-3 pt-1">
                       <div className="flex items-center gap-6 flex-wrap">
                         {/* Round scores */}
                         {(['R1', 'R2', 'R3', 'R4'] as const).map((r) => {
