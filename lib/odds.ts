@@ -48,7 +48,7 @@ const NAME_ALIASES: Record<string, string> = {
   // Nickname / abbreviation variations
   'nicolas echavarria':   'nico echavarria',
   'min-woo lee':          'min woo lee',
-  'jj spaun':             'jj spaun', // handles "JJ Spaun" (no dots) → same result
+  'j j spaun':            'jj spaun', // "J. J. Spaun" (space after dot) → "j j spaun"
 };
 
 function normalizeName(name: string): string {

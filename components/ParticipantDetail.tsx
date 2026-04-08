@@ -119,13 +119,27 @@ export default function ParticipantDetail({
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                   <div className="min-w-0">
-                    <p className={`text-base font-semibold leading-tight ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                      {emoji && <span className="mr-1">{emoji}</span>}
-                      {liveData?.displayName ?? player.displayName}
-                      {isCut && (
-                        <span className="ml-2 text-xs font-bold text-red-500">CUT</span>
-                      )}
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <p className={`text-base font-semibold leading-tight ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                        {emoji && <span className="mr-1">{emoji}</span>}
+                        {liveData?.displayName ?? player.displayName}
+                        {isCut && (
+                          <span className="ml-2 text-xs font-bold text-red-500">CUT</span>
+                        )}
+                      </p>
+                      <button
+                        onClick={() => toggleTier(tier.id)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+                        aria-label={isExpanded ? 'Hide stats' : 'Show stats'}
+                      >
+                        <svg
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
                     {roundStats.length > 0 && (
                       <div className="flex items-center gap-2 mt-0.5">
                         {roundStats.map((s) => (
@@ -201,19 +215,6 @@ export default function ParticipantDetail({
                     </p>
                   </div>
 
-                  {/* Expand chevron */}
-                  <button
-                    onClick={() => toggleTier(tier.id)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                    aria-label={isExpanded ? 'Hide stats' : 'Show stats'}
-                  >
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
                 </div>
               </div>
             </div>
