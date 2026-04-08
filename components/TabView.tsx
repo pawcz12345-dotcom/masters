@@ -35,14 +35,15 @@ export default function TabView({
   players: Player[];
   tiers: Tier[];
 }) {
-  const [activeRound, setActiveRound] = useState<number>(99); // default: Live
+  const isPreTournament = currentStatus.state === 'pre';
+  const [activeRound, setActiveRound] = useState<number>(isPreTournament ? 0 : 99);
   const [contentTab, setContentTab] = useState<ContentTab>('standings');
 
-  // Pre (0) and Live (99) are always available; R1-R4 only when snapshot exists
+  // Pre (0) always available; Live (99) only once tournament starts; R1-R4 when snapshot exists
   const availableRounds = new Set<number>([
-    0,   // Pre always available
+    0,
     ...snapshotRounds.map((r) => r.round),
-    99,  // Live always available
+    ...(isPreTournament ? [] : [99]),
   ]);
 
   // Get data for currently selected round
