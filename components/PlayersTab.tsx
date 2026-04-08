@@ -56,7 +56,7 @@ export default function PlayersTab({
   evRecord: Record<string, number>;
   cutProbRecord: Record<string, number>;
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>('pos');
+  const [sortKey, setSortKey] = useState<SortKey>('ev');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
