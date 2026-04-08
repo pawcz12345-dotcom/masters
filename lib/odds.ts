@@ -5,6 +5,13 @@ const ODDS_API_URL =
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export interface OddsResult {
+  /** espnId → expected purse $ (Harville MC) */
+  ev: Map<string, number>;
+  /** espnId → P(make cut) 0–1, estimated as P(finish in a paying position) */
+  cutProb: Map<string, number>;
+}
+
 interface OddsOutcome {
   name: string;
   price: number; // American odds
@@ -24,15 +31,12 @@ interface OddsEvent {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** American odds → raw implied probability (includes vig) */
 function americanToImplied(american: number): number {
   return american < 0
     ? Math.abs(american) / (Math.abs(american) + 100)
     : 100 / (american + 100);
 }
 
-/** Normalize a player name for fuzzy matching:
- *  lowercase, strip accents, keep only a-z and spaces */
 function normalizeName(name: string): string {
   return name
     .normalize('NFD')
@@ -45,145 +49,156 @@ function normalizeName(name: string): string {
 
 // ─── Harville Monte Carlo ─────────────────────────────────────────────────────
 
+interface HarvillePlayer {
+  id: string;   // espnId for matched players, _u_N for unmatched
+  prob: number; // vig-stripped probability
+}
+
+interface HarvilleResult {
+  ev: Map<string, number>;
+  cutProb: Map<string, number>;
+}
+
 /**
- * Given win probabilities (already vig-stripped, summing to 1),
- * simulate finish order using the Harville sequential selection model.
- * Returns EV in dollars for each player (espnId → expected purse $).
+ * Harville sequential draw over ALL players (matched + unmatched).
+ * Returns EV and cut probability only for players that have an espnId
+ * (i.e. matched to our pool). Unmatched players absorb probability mass
+ * correctly so the vig strip is accurate across the whole field.
+ *
+ * cut = finishing in any paying position (top ~50 at the Masters)
  */
 function harvilleEV(
-  players: Array<{ espnId: string; prob: number }>,
+  players: HarvillePlayer[],
   pursePayouts: PurseEntry[],
   simCount = 4000
-): Map<string, number> {
-  const K = pursePayouts.length;
-  // positionTotals[espnId][k] = cumulative times this player landed in position k
+): HarvilleResult {
+  const K = pursePayouts.length; // number of paying positions (~50)
+
+  // Only track counts for espnId players (no leading underscore)
   const positionCounts = new Map<string, Float64Array>();
   for (const p of players) {
-    positionCounts.set(p.espnId, new Float64Array(K));
+    if (!p.id.startsWith('_u_')) {
+      positionCounts.set(p.id, new Float64Array(K));
+    }
   }
 
   for (let sim = 0; sim < simCount; sim++) {
-    // Copy remaining players for this simulation
-    const remaining = players.map((p) => ({ ...p }));
+    const remaining = players.map((p) => ({ id: p.id, prob: p.prob }));
 
     for (let pos = 0; pos < K && remaining.length > 0; pos++) {
-      // Total prob of remaining players
       let total = 0;
       for (const r of remaining) total += r.prob;
 
-      // Weighted draw
       const rand = Math.random() * total;
       let cumSum = 0;
       let chosenIdx = remaining.length - 1;
       for (let i = 0; i < remaining.length; i++) {
         cumSum += remaining[i].prob;
-        if (cumSum >= rand) {
-          chosenIdx = i;
-          break;
-        }
+        if (cumSum >= rand) { chosenIdx = i; break; }
       }
 
       const chosen = remaining[chosenIdx];
-      positionCounts.get(chosen.espnId)![pos]++;
+      if (positionCounts.has(chosen.id)) {
+        positionCounts.get(chosen.id)![pos]++;
+      }
       remaining.splice(chosenIdx, 1);
     }
   }
 
-  // EV = Σ_k P(finish k) × purse[k]
   const ev = new Map<string, number>();
+  const cutProb = new Map<string, number>();
+
   for (const [espnId, counts] of positionCounts.entries()) {
     let playerEV = 0;
+    let cutCount = 0;
     for (let k = 0; k < K; k++) {
       playerEV += (counts[k] / simCount) * (pursePayouts[k]?.amount ?? 0);
+      cutCount += counts[k];
     }
     ev.set(espnId, playerEV);
+    cutProb.set(espnId, cutCount / simCount);
   }
 
-  return ev;
+  return { ev, cutProb };
 }
 
 // ─── In-memory fallback ───────────────────────────────────────────────────────
 
-let cachedOddsEV: Map<string, number> | null = null;
+let cachedResult: OddsResult | null = null;
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-/**
- * Fetch odds, strip vig, run Harville simulation.
- * Returns Map<espnId, expectedPurse$> or null if unavailable.
- *
- * Uses Next.js fetch cache (revalidate 2h) to stay within free API tier.
- */
 export async function fetchOddsEV(
-  /** players from players.json — used for espnId ↔ name mapping */
   players: Array<{ espnId: string; displayName: string }>,
   pursePayouts: PurseEntry[]
-): Promise<Map<string, number> | null> {
+): Promise<OddsResult | null> {
   const apiKey = process.env.ODDS_API_KEY;
-  if (!apiKey) return cachedOddsEV; // no key → use last cached or null
+  if (!apiKey) return cachedResult;
 
   try {
     const url = `${ODDS_API_URL}?apiKey=${apiKey}&regions=us&markets=outrights&oddsFormat=american`;
-    const res = await fetch(url, {
-      next: { revalidate: 7200 }, // 2-hour cache — ~12 requests/day max
-    });
+    const res = await fetch(url, { next: { revalidate: 7200 } });
 
     if (!res.ok) {
       console.warn(`Odds API returned ${res.status}`);
-      return cachedOddsEV;
+      return cachedResult;
     }
 
     const events: OddsEvent[] = await res.json();
-    if (!events || events.length === 0) return cachedOddsEV;
+    if (!events || events.length === 0) return cachedResult;
 
-    // Build name → espnId lookup (normalized)
-    const nameToId = new Map<string, string>();
+    // Build name → espnId lookup
+    const nameToEspnId = new Map<string, string>();
     for (const p of players) {
-      nameToId.set(normalizeName(p.displayName), p.espnId);
+      nameToEspnId.set(normalizeName(p.displayName), p.espnId);
     }
 
-    // Aggregate implied probs across all bookmakers (use best-of-market average)
-    const impliedSums = new Map<string, number>(); // espnId → sum of implied probs
-    const impliedCounts = new Map<string, number>(); // espnId → count of books
+    // Collect ALL players from the odds feed (matched + unmatched)
+    // Key: normalized name, Value: { espnId | null, sum of implied probs, count }
+    const allPlayers = new Map<string, { id: string; impliedSum: number; count: number }>();
 
+    let unmatchedIdx = 0;
     for (const event of events) {
       for (const bookmaker of event.bookmakers) {
         const market = bookmaker.markets.find((m) => m.key === 'outrights');
         if (!market) continue;
 
         for (const outcome of market.outcomes) {
-          const normalizedName = normalizeName(outcome.name);
-          const espnId = nameToId.get(normalizedName);
-          if (!espnId) continue; // player not in our pool — skip
+          const normName = normalizeName(outcome.name);
+          const espnId = nameToEspnId.get(normName);
+          const id = espnId ?? `_u_${unmatchedIdx++}`;
 
-          const implied = americanToImplied(outcome.price);
-          impliedSums.set(espnId, (impliedSums.get(espnId) ?? 0) + implied);
-          impliedCounts.set(espnId, (impliedCounts.get(espnId) ?? 0) + 1);
+          // Dedupe unmatched players across bookmakers by name
+          const key = normName;
+          if (!allPlayers.has(key)) {
+            allPlayers.set(key, { id, impliedSum: 0, count: 0 });
+          }
+          const entry = allPlayers.get(key)!;
+          entry.impliedSum += americanToImplied(outcome.price);
+          entry.count++;
         }
       }
     }
 
-    if (impliedSums.size === 0) return cachedOddsEV;
+    if (allPlayers.size === 0) return cachedResult;
 
-    // Average across bookmakers
-    const avgImplied = new Map<string, number>();
-    for (const [espnId, sum] of impliedSums.entries()) {
-      avgImplied.set(espnId, sum / impliedCounts.get(espnId)!);
-    }
-
-    // Strip vig: normalize so all probs sum to 1
-    const totalImplied = Array.from(avgImplied.values()).reduce((a, b) => a + b, 0);
-    const oddsPlayers = Array.from(avgImplied.entries()).map(([espnId, implied]) => ({
-      espnId,
-      prob: implied / totalImplied,
+    // Average implied prob across bookmakers, then normalize over ALL players
+    const avgImplied = Array.from(allPlayers.values()).map((p) => ({
+      id: p.id,
+      implied: p.impliedSum / p.count,
     }));
 
-    // Run Harville Monte Carlo
-    const ev = harvilleEV(oddsPlayers, pursePayouts);
-    cachedOddsEV = ev;
-    return ev;
+    const totalImplied = avgImplied.reduce((s, p) => s + p.implied, 0);
+    const harvillePlayers: HarvillePlayer[] = avgImplied.map((p) => ({
+      id: p.id,
+      prob: p.implied / totalImplied,
+    }));
+
+    const result = harvilleEV(harvillePlayers, pursePayouts);
+    cachedResult = result;
+    return result;
   } catch (err) {
     console.error('Odds fetch/compute failed:', err);
-    return cachedOddsEV;
+    return cachedResult;
   }
 }

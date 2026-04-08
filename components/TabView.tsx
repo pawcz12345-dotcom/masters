@@ -18,12 +18,16 @@ export default function TabView({
   players,
   tiers,
   status,
+  evRecord,
+  cutProbRecord,
 }: {
   standings: ParticipantScore[];
   competitors: ESPNCompetitor[];
   players: Player[];
   tiers: Tier[];
   status: ESPNTournamentStatus;
+  evRecord: Record<string, number>;
+  cutProbRecord: Record<string, number>;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>('standings');
 
@@ -67,6 +71,8 @@ export default function TabView({
               tiers={tiers}
               standings={standings}
               status={status}
+              evRecord={evRecord}
+              cutProbRecord={cutProbRecord}
             />
           </>
         )}

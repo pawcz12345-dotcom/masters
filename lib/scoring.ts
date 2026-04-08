@@ -8,6 +8,7 @@ import type {
   PlayerLiveData,
   ParticipantScore,
 } from './types';
+import type { OddsResult } from './odds';
 import { formatCurrency } from './utils';
 
 function computeProjectedEarnings(
@@ -66,9 +67,7 @@ export function computeStandings(
   competitors: ESPNCompetitor[],
   pursePayouts: PurseEntry[],
   status: ESPNTournamentStatus,
-  /** Optional odds-based EV map (espnId → expected purse $). When provided,
-   *  replaces position-based projected earnings pre/during tournament. */
-  oddsEV: Map<string, number> | null = null
+  oddsResult: OddsResult | null = null
 ): ParticipantScore[] {
   // Build lookup maps
   const playerMap = new Map<string, Player>(players.map((p) => [p.id, p]));
@@ -125,7 +124,7 @@ export function computeStandings(
 
         const playerEV = isTournamentComplete
           ? earnings
-          : (oddsEV?.get(player.espnId) ?? projected);
+          : (oddsResult?.ev.get(player.espnId) ?? projected);
 
         liveData = {
           espnId: player.espnId,
@@ -142,6 +141,7 @@ export function computeStandings(
           statistics: competitor.statistics ?? [],
           oddsEV: playerEV,
           oddsEVDisplay: playerEV > 0 ? formatCurrency(playerEV) : '$0',
+          cutProbability: oddsResult?.cutProb.get(player.espnId) ?? 0,
         };
 
         totalEarnings += projected;

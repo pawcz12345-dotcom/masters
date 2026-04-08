@@ -174,7 +174,7 @@ export default function LeaderboardRow({
                           {' · '}
                           <span>{status.state === 'pre' ? <span className="text-gray-300">—</span> : pos}</span>
                         </p>
-                        <p className="mt-0.5 space-x-2">
+                        <p className="mt-0.5 space-x-2 text-[11px]">
                           <span className={liveData?.projectedEarnings ?? 0 > 0 ? 'text-green-700 font-medium' : 'text-gray-300'}>
                             {liveData?.projectedEarnings ?? 0 > 0 ? liveData!.projectedEarningsDisplay : '$0'}
                           </span>
@@ -182,6 +182,17 @@ export default function LeaderboardRow({
                           <span className={liveData?.oddsEV ?? 0 > 0 ? 'text-blue-500 font-medium' : 'text-gray-300'}>
                             {liveData?.oddsEV ?? 0 > 0 ? liveData!.oddsEVDisplay : '—'}
                           </span>
+                          {liveData?.cutProbability != null && liveData.cutProbability > 0 && (
+                            <>
+                              <span className="text-gray-300">·</span>
+                              <span className={
+                                liveData.cutProbability >= 0.75 ? 'text-green-600 font-medium' :
+                                liveData.cutProbability >= 0.50 ? 'text-yellow-600 font-medium' : 'text-red-500 font-medium'
+                              }>
+                                {(liveData.cutProbability * 100).toFixed(0)}% cut
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>

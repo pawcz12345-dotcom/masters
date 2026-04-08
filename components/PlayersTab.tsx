@@ -18,10 +18,12 @@ interface RichPlayer {
   projectedEarningsDisplay: string;
   oddsEV: number;
   oddsEVDisplay: string;
+  cutProbability: number;
+  roundScores: Array<{ name: string; displayValue: string }>;
   pickedBy: Array<{ name: string; teamName?: string; slug: string }>;
 }
 
-type SortKey = 'pos' | 'score' | 'earnings' | 'ev';
+type SortKey = 'pos' | 'score' | 'earnings' | 'ev' | 'cut';
 
 function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   return (
@@ -31,24 +33,43 @@ function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   );
 }
 
+function cutColor(prob: number): string {
+  if (prob >= 0.75) return 'text-green-600';
+  if (prob >= 0.50) return 'text-yellow-600';
+  return 'text-red-500';
+}
+
 export default function PlayersTab({
   competitors,
   players,
   tiers,
   standings,
   status,
+  evRecord,
+  cutProbRecord,
 }: {
   competitors: ESPNCompetitor[];
   players: Player[];
   tiers: Tier[];
   standings: ParticipantScore[];
   status: ESPNTournamentStatus;
+  evRecord: Record<string, number>;
+  cutProbRecord: Record<string, number>;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>('pos');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // Build lookup maps
+  function toggleExpand(espnId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(espnId)) next.delete(espnId);
+      else next.add(espnId);
+      return next;
+    });
+  }
+
   const playerByEspnId = useMemo(() => {
     const m = new Map<string, Player>();
     for (const p of players) m.set(p.espnId, p);
@@ -61,7 +82,6 @@ export default function PlayersTab({
     return m;
   }, [tiers]);
 
-  // Build pickedBy map: espnId → participants who picked them
   const pickedByMap = useMemo(() => {
     const m = new Map<string, Array<{ name: string; teamName?: string; slug: string }>>();
     for (const s of standings) {
@@ -77,7 +97,6 @@ export default function PlayersTab({
     return m;
   }, [standings]);
 
-  // Enrich competitors
   const richPlayers = useMemo((): RichPlayer[] => {
     return competitors.map((c) => {
       const ourPlayer = playerByEspnId.get(c.athlete.id);
@@ -87,11 +106,12 @@ export default function PlayersTab({
         status.period > 2 &&
         (c.earnings ?? 0) === 0;
 
-      // Find liveData for this player from standings (has projected + oddsEV)
+      // EV: prefer liveData from standings (has personalized EV), fall back to evRecord
+      let oddsEV = evRecord[c.athlete.id] ?? 0;
+      let oddsEVDisplay = oddsEV > 0 ? formatCurrency(oddsEV) : '—';
       let projectedEarnings = 0;
       let projectedEarningsDisplay = '$0';
-      let oddsEV = 0;
-      let oddsEVDisplay = '$0';
+
       for (const s of standings) {
         for (const { player, liveData } of s.picks) {
           if (player.espnId === c.athlete.id && liveData) {
@@ -104,11 +124,15 @@ export default function PlayersTab({
         }
       }
 
-      // For players not in the pool, compute projected earnings from competitor data
       if (projectedEarnings === 0 && c.earnings > 0) {
         projectedEarnings = c.earnings;
         projectedEarningsDisplay = formatCurrency(c.earnings);
       }
+
+      const ROUND_NAMES = new Set(['R1', 'R2', 'R3', 'R4']);
+      const roundScores = (c.statistics ?? []).filter(
+        (s) => ROUND_NAMES.has(s.name) && s.displayValue && s.displayValue !== '--'
+      );
 
       return {
         espnId: c.athlete.id,
@@ -124,10 +148,12 @@ export default function PlayersTab({
         projectedEarningsDisplay,
         oddsEV,
         oddsEVDisplay,
+        cutProbability: cutProbRecord[c.athlete.id] ?? 0,
+        roundScores,
         pickedBy: pickedByMap.get(c.athlete.id) ?? [],
       };
     });
-  }, [competitors, playerByEspnId, tierMap, pickedByMap, standings, status]);
+  }, [competitors, playerByEspnId, tierMap, pickedByMap, standings, status, evRecord, cutProbRecord]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return richPlayers;
@@ -142,13 +168,14 @@ export default function PlayersTab({
       switch (sortKey) {
         case 'pos':      diff = a.sortOrder - b.sortOrder; break;
         case 'score': {
-          const aVal = a.scoreDisplay === 'E' ? 0 : parseFloat(a.scoreDisplay) || 0;
-          const bVal = b.scoreDisplay === 'E' ? 0 : parseFloat(b.scoreDisplay) || 0;
-          diff = aVal - bVal;
+          const aV = a.scoreDisplay === 'E' ? 0 : parseFloat(a.scoreDisplay) || 0;
+          const bV = b.scoreDisplay === 'E' ? 0 : parseFloat(b.scoreDisplay) || 0;
+          diff = aV - bV;
           break;
         }
         case 'earnings': diff = b.projectedEarnings - a.projectedEarnings; break;
         case 'ev':       diff = b.oddsEV - a.oddsEV; break;
+        case 'cut':      diff = b.cutProbability - a.cutProbability; break;
       }
       return sortDir === 'asc' ? diff : -diff;
     });
@@ -176,7 +203,6 @@ export default function PlayersTab({
 
   return (
     <div>
-      {/* Search */}
       <div className="mb-4">
         <input
           type="text"
@@ -193,121 +219,214 @@ export default function PlayersTab({
             {th('pos', 'Pos', 'w-12')}
             <th className="pb-3 pr-4 text-xs uppercase tracking-wide text-gray-500">Player</th>
             {th('score', 'Score', 'text-right')}
-            <th className="pb-3 pr-4 text-right text-xs uppercase tracking-wide text-gray-500 whitespace-nowrap">Thru</th>
+            <th className="pb-3 pr-4 text-right text-xs uppercase tracking-wide text-gray-500">Thru</th>
+            {th('cut', 'Cut %', 'text-right')}
             {th('earnings', 'Live $', 'text-right')}
             {th('ev', 'EV $', 'text-right')}
-            <th className="pb-3 text-right text-xs uppercase tracking-wide text-gray-500 whitespace-nowrap">Picked By</th>
+            <th className="pb-3 pr-2 text-right text-xs uppercase tracking-wide text-gray-500">Picked By</th>
+            <th className="pb-3 w-6" />
           </tr>
         </thead>
         <tbody>
           {sorted.map((p) => {
             const scoreNum = p.scoreDisplay === 'E' ? 0 : parseFloat(p.scoreDisplay) || 0;
             const inPool = p.pickedBy.length > 0;
+            const isExpanded = expanded.has(p.espnId);
+            const hasCutProb = p.cutProbability > 0;
 
             return (
-              <tr
-                key={p.espnId}
-                className={`border-b border-gray-100 transition-colors ${
-                  p.isCut ? 'opacity-40' : inPool ? 'hover:bg-green-50' : 'hover:bg-gray-50'
-                }`}
-              >
-                {/* Pos */}
-                <td className="py-3 pr-4">
-                  <span className="font-semibold text-gray-600 tabular-nums text-sm">
-                    {isPreTournament ? '—' : p.position}
-                  </span>
-                </td>
-
-                {/* Player */}
-                <td className="py-3 pr-4">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`https://a.espncdn.com/i/headshots/golf/players/full/${p.espnId}.png`}
-                      alt={p.displayName}
-                      width={28}
-                      height={28}
-                      className={`rounded-full object-cover bg-gray-100 shrink-0 ${p.isCut ? 'grayscale' : ''}`}
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                    <div>
-                      <p className={`font-medium text-gray-900 whitespace-nowrap ${p.isCut ? 'line-through' : ''}`}>
-                        {p.displayName}
-                      </p>
-                      {p.tier && (
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">{p.tier.name}</p>
-                      )}
-                    </div>
-                  </div>
-                </td>
-
-                {/* Score */}
-                <td className="py-3 pr-4 text-right tabular-nums font-medium">
-                  {isPreTournament ? (
-                    <span className="text-gray-300">—</span>
-                  ) : (
-                    <span className={
-                      scoreNum < 0 ? 'text-red-600' :
-                      scoreNum > 0 ? 'text-gray-500' : 'text-gray-700'
-                    }>
-                      {p.scoreDisplay}
+              <>
+                <tr
+                  key={p.espnId}
+                  className={`border-b border-gray-100 transition-colors ${
+                    p.isCut ? 'opacity-40' : inPool ? 'hover:bg-green-50' : 'hover:bg-gray-50'
+                  } ${isExpanded ? (inPool ? 'bg-green-50' : 'bg-gray-50') : ''}`}
+                >
+                  {/* Pos */}
+                  <td className="py-3 pr-4">
+                    <span className="font-semibold text-gray-600 tabular-nums">
+                      {isPreTournament ? <span className="text-gray-300">—</span> : p.position}
                     </span>
-                  )}
-                </td>
+                  </td>
 
-                {/* Thru */}
-                <td className="py-3 pr-4 text-right tabular-nums text-gray-600">
-                  {isPreTournament ? (
-                    <span className="text-gray-300">—</span>
-                  ) : p.state === 'in' && p.thru > 0 ? p.thru
-                  : p.state === 'post' ? 'F'
-                  : '—'}
-                </td>
-
-                {/* Live $ */}
-                <td className="py-3 pr-4 text-right tabular-nums font-medium">
-                  {p.projectedEarnings > 0 ? (
-                    <span className="text-green-700">{p.projectedEarningsDisplay}</span>
-                  ) : (
-                    <span className="text-gray-300">$0</span>
-                  )}
-                </td>
-
-                {/* EV $ */}
-                <td className="py-3 pr-4 text-right tabular-nums font-medium">
-                  {p.oddsEV > 0 ? (
-                    <span className="text-blue-600">{p.oddsEVDisplay}</span>
-                  ) : (
-                    <span className="text-gray-300">—</span>
-                  )}
-                </td>
-
-                {/* Picked By */}
-                <td className="py-3 text-right">
-                  {p.pickedBy.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 justify-end">
-                      {p.pickedBy.map((participant) => (
-                        <a
-                          key={participant.slug}
-                          href={`/participant/${participant.slug}`}
-                          className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-800 hover:bg-green-200 transition-colors whitespace-nowrap"
-                          title={participant.name}
-                        >
-                          {participant.teamName ?? participant.name}
-                        </a>
-                      ))}
+                  {/* Player */}
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={`https://a.espncdn.com/i/headshots/golf/players/full/${p.espnId}.png`}
+                        alt={p.displayName}
+                        width={28}
+                        height={28}
+                        className={`rounded-full object-cover bg-gray-100 shrink-0 ${p.isCut ? 'grayscale' : ''}`}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <div>
+                        <p className={`font-medium text-gray-900 whitespace-nowrap ${p.isCut ? 'line-through' : ''}`}>
+                          {p.displayName}
+                        </p>
+                        {p.tier && (
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">{p.tier.name}</p>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <span className="text-gray-200 text-xs">—</span>
-                  )}
-                </td>
-              </tr>
+                  </td>
+
+                  {/* Score */}
+                  <td className="py-3 pr-4 text-right tabular-nums font-medium">
+                    {isPreTournament ? (
+                      <span className="text-gray-300">—</span>
+                    ) : (
+                      <span className={scoreNum < 0 ? 'text-red-600' : scoreNum > 0 ? 'text-gray-500' : 'text-gray-700'}>
+                        {p.scoreDisplay}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Thru */}
+                  <td className="py-3 pr-4 text-right tabular-nums text-gray-600">
+                    {isPreTournament ? (
+                      <span className="text-gray-300">—</span>
+                    ) : p.state === 'in' && p.thru > 0 ? p.thru
+                    : p.state === 'post' ? 'F'
+                    : '—'}
+                  </td>
+
+                  {/* Cut % */}
+                  <td className="py-3 pr-4 text-right tabular-nums font-medium">
+                    {hasCutProb ? (
+                      <span className={cutColor(p.cutProbability)}>
+                        {(p.cutProbability * 100).toFixed(0)}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+
+                  {/* Live $ */}
+                  <td className="py-3 pr-4 text-right tabular-nums font-medium">
+                    {p.projectedEarnings > 0 ? (
+                      <span className="text-green-700">{p.projectedEarningsDisplay}</span>
+                    ) : (
+                      <span className="text-gray-300">$0</span>
+                    )}
+                  </td>
+
+                  {/* EV $ */}
+                  <td className="py-3 pr-4 text-right tabular-nums font-medium">
+                    {p.oddsEV > 0 ? (
+                      <span className="text-blue-600">{p.oddsEVDisplay}</span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+
+                  {/* Picked By */}
+                  <td className="py-3 pr-2 text-right">
+                    {p.pickedBy.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {p.pickedBy.map((participant) => (
+                          <a
+                            key={participant.slug}
+                            href={`/participant/${participant.slug}`}
+                            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-800 hover:bg-green-200 transition-colors whitespace-nowrap"
+                            title={participant.name}
+                          >
+                            {participant.teamName ?? participant.name}
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-200 text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* Expand chevron */}
+                  <td className="py-3 w-6">
+                    <button
+                      onClick={() => toggleExpand(p.espnId)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+
+                {/* Expanded round scores row */}
+                {isExpanded && (
+                  <tr key={`${p.espnId}-expanded`} className={`border-b border-gray-100 ${inPool ? 'bg-green-50' : 'bg-gray-50'}`}>
+                    <td colSpan={9} className="px-4 pb-3 pt-1">
+                      <div className="flex items-center gap-6 flex-wrap">
+                        {/* Round scores */}
+                        {(['R1', 'R2', 'R3', 'R4'] as const).map((r) => {
+                          const stat = p.roundScores.find((s) => s.name === r);
+                          return (
+                            <div key={r} className="text-center">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">{r}</p>
+                              <p className="text-sm font-semibold text-gray-700 tabular-nums">
+                                {stat ? stat.displayValue : <span className="text-gray-300">—</span>}
+                              </p>
+                            </div>
+                          );
+                        })}
+
+                        {/* Divider */}
+                        {hasCutProb && <div className="h-8 w-px bg-gray-200" />}
+
+                        {/* Cut probability bar */}
+                        {hasCutProb && (
+                          <div className="flex items-center gap-3">
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Make Cut</p>
+                              <p className={`text-sm font-semibold tabular-nums ${cutColor(p.cutProbability)}`}>
+                                {(p.cutProbability * 100).toFixed(1)}%
+                              </p>
+                            </div>
+                            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  p.cutProbability >= 0.75 ? 'bg-green-500' :
+                                  p.cutProbability >= 0.50 ? 'bg-yellow-400' : 'bg-red-400'
+                                }`}
+                                style={{ width: `${(p.cutProbability * 100).toFixed(0)}%` }}
+                              />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Miss Cut</p>
+                              <p className="text-sm font-semibold text-gray-500 tabular-nums">
+                                {((1 - p.cutProbability) * 100).toFixed(1)}%
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* EV breakdown */}
+                        {p.oddsEV > 0 && (
+                          <>
+                            <div className="h-8 w-px bg-gray-200" />
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">EV $</p>
+                              <p className="text-sm font-semibold text-blue-600 tabular-nums">{p.oddsEVDisplay}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             );
           })}
         </tbody>
       </table>
 
       <p className="text-xs text-gray-300 mt-4 text-center">
-        {sorted.length} players · only pool picks show EV $
+        {sorted.length} players · Cut % via Harville simulation from live odds
       </p>
     </div>
   );

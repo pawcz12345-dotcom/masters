@@ -41,7 +41,7 @@ export default async function ParticipantPage({
     espn.competitors,
     purseData.payouts as PurseEntry[],
     espn.status,
-    oddsEV
+    oddsEV  // OddsResult | null
   );
 
   const myScore = standings.find((s) => s.participant.slug === slug);

@@ -170,6 +170,19 @@ export default function ParticipantDetail({
                     </p>
                   </div>
 
+                  {/* Cut % */}
+                  {liveData && liveData.cutProbability > 0 && (
+                    <div className="text-center">
+                      <p className="text-xs text-gray-400 mb-0.5">Cut %</p>
+                      <p className={`text-sm font-semibold tabular-nums ${
+                        liveData.cutProbability >= 0.75 ? 'text-green-600' :
+                        liveData.cutProbability >= 0.50 ? 'text-yellow-600' : 'text-red-500'
+                      }`}>
+                        {(liveData.cutProbability * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                  )}
+
                   {/* Purse columns — always visible */}
                   <div className="text-center">
                     <p className="text-xs text-gray-400 mb-0.5">Live $</p>

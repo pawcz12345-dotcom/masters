@@ -88,6 +88,7 @@ export interface PlayerLiveData {
   statistics: Array<{ name: string; displayValue: string }>;
   oddsEV: number;
   oddsEVDisplay: string;
+  cutProbability: number; // 0–1, from Harville simulation
 }
 
 export interface PickResult {

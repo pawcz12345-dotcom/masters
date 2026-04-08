@@ -28,6 +28,14 @@ export default async function Home() {
     oddsEV
   );
 
+  // Serialize ev + cutProb maps as plain objects for client components
+  const evRecord: Record<string, number> = {};
+  const cutProbRecord: Record<string, number> = {};
+  if (oddsEV) {
+    for (const [k, v] of oddsEV.ev) evRecord[k] = v;
+    for (const [k, v] of oddsEV.cutProb) cutProbRecord[k] = v;
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -48,6 +56,8 @@ export default async function Home() {
           players={playersData.players as Player[]}
           tiers={tiersData.tiers as Tier[]}
           status={espn.status}
+          evRecord={evRecord}
+          cutProbRecord={cutProbRecord}
         />
 
         <p className="text-center text-xs text-gray-300 mt-6">
