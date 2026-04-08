@@ -19,5 +19,5 @@ export default function LastUpdated({ lastFetched }: { lastFetched: string }) {
 
   if (!label) return null;
 
-  return <span className="text-xs text-slate-500">{label}</span>;
+  return <span className="text-xs text-masters-ink-3 dark:text-masters-d-ink-3">{label}</span>;
 }

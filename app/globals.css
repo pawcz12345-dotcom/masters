@@ -1,11 +1,45 @@
 @import "tailwindcss";
 
+/* Class-based dark mode */
+@variant dark (&:is(.dark *));
+
 @theme inline {
   --font-sans: var(--font-inter);
+
+  /* ── Light mode ─────────────────────────────────────── */
+  --color-masters-bg:       #F5F0E8;
+  --color-masters-card:     #FFFFFF;
+  --color-masters-hover:    #EBF1EB;
+  --color-masters-border:   #C8D8CA;
+  --color-masters-ink:      #1A2A1E;
+  --color-masters-ink-2:    #4A6B57;
+  --color-masters-ink-3:    #849F8E;
+  --color-masters-ink-4:    #C5D5C9;
+  --color-masters-green:    #006747;
+  --color-masters-green-2:  #004F38;
+  --color-masters-gold:     #967200;
+  --color-masters-gold-2:   #C49200;
+  --color-masters-yellow:   #F2C029;
+  --color-masters-red:      #B8281E;
+
+  /* ── Dark mode ──────────────────────────────────────── */
+  --color-masters-d-bg:     #091610;
+  --color-masters-d-card:   #0D2219;
+  --color-masters-d-hover:  #142C1F;
+  --color-masters-d-border: #1A3D2A;
+  --color-masters-d-ink:    #E5F0E9;
+  --color-masters-d-ink-2:  #72A885;
+  --color-masters-d-ink-3:  #3A6250;
+  --color-masters-d-ink-4:  #1A3020;
+  --color-masters-d-green:  #00C070;
+  --color-masters-d-green-2:#009A58;
+  --color-masters-d-gold:   #EDB820;
+  --color-masters-d-gold-2: #C49A00;
+  --color-masters-d-red:    #FF6060;
 }
 
 body {
   font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
-  background-color: #020617; /* slate-950 */
-  color: #f1f5f9; /* slate-100 */
+  background-color: #F5F0E8;
+  color: #1A2A1E;
 }
