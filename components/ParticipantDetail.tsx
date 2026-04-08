@@ -1,3 +1,5 @@
+'use client';
+
 import type { ParticipantScore } from '@/lib/types';
 
 interface Props {
@@ -44,13 +46,23 @@ export default function ParticipantDetail({
 
             {/* Main row: player name + live stats */}
             <div className="flex items-center justify-between gap-4">
-              {/* Left: player name */}
-              <p className={`text-base font-semibold ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                {liveData?.displayName ?? player.displayName}
-                {isCut && (
-                  <span className="ml-2 text-xs font-bold text-red-500 no-underline not-italic">CUT</span>
-                )}
-              </p>
+              {/* Left: headshot + player name */}
+              <div className="flex items-center gap-3 min-w-0">
+                <img
+                  src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
+                  alt={liveData?.displayName ?? player.displayName}
+                  width={48}
+                  height={48}
+                  className={`rounded-full object-cover bg-gray-100 shrink-0 ${isCut ? 'grayscale opacity-50' : ''}`}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <p className={`text-base font-semibold ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                  {liveData?.displayName ?? player.displayName}
+                  {isCut && (
+                    <span className="ml-2 text-xs font-bold text-red-500 no-underline not-italic">CUT</span>
+                  )}
+                </p>
+              </div>
 
               {/* Right: live stats */}
               {isPreTournament ? (

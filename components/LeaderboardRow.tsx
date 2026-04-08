@@ -142,28 +142,40 @@ export default function LeaderboardRow({
 
                 return (
                   <div key={tier.id} className={`text-xs ${isCut ? 'opacity-40' : ''}`}>
-                    <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center justify-between gap-1 mb-1">
                       <p className="text-gray-400 font-medium uppercase tracking-wide text-[10px]">
                         {tier.name}
                       </p>
                       <p className="text-gray-400 text-[10px]">{pct}%</p>
                     </div>
-                    <p className={`font-semibold text-gray-800 truncate ${isCut ? 'line-through' : ''}`}>
-                      {name}
-                    </p>
-                    <p className="text-gray-500">
-                      {status.state === 'pre' ? (
-                        <span className="text-gray-300">Pre-Tournament</span>
-                      ) : (
-                        <>
-                          <span className={score?.startsWith('-') ? 'text-red-500 font-medium' : ''}>
-                            {score ?? 'E'}
-                          </span>
-                          {' · '}
-                          <span>{pos}</span>
-                        </>
-                      )}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
+                        alt={name}
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover bg-gray-100 shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <div>
+                        <p className={`font-semibold text-gray-800 truncate ${isCut ? 'line-through' : ''}`}>
+                          {name}
+                        </p>
+                        <p className="text-gray-500">
+                          {status.state === 'pre' ? (
+                            <span className="text-gray-300">Pre-Tournament</span>
+                          ) : (
+                            <>
+                              <span className={score?.startsWith('-') ? 'text-red-500 font-medium' : ''}>
+                                {score ?? 'E'}
+                              </span>
+                              {' · '}
+                              <span>{pos}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
