@@ -39,11 +39,16 @@ function americanToImplied(american: number): number {
 
 // Known name mismatches: odds API name (normalized) → our players.json name (normalized)
 const NAME_ALIASES: Record<string, string> = {
-  'matthew fitzpatrick': 'matt fitzpatrick',
-  'matt mccarty':        'matthew mccarty',
-  'john keefer':         'johnny keefer',
-  'nicolas echavarria':  'nico echavarria',
-  'min-woo lee':         'min woo lee',
+  // First name variations
+  'matthew fitzpatrick':  'matt fitzpatrick',
+  'matt mccarty':         'matthew mccarty',
+  'john keefer':          'johnny keefer',
+  'alexander noren':      'alex noren',
+  'christopher gotterup': 'chris gotterup',
+  // Nickname / abbreviation variations
+  'nicolas echavarria':   'nico echavarria',
+  'min-woo lee':          'min woo lee',
+  'jj spaun':             'jj spaun', // handles "JJ Spaun" (no dots) → same result
 };
 
 function normalizeName(name: string): string {
@@ -202,6 +207,15 @@ export async function fetchOddsEV(
     }
 
     if (allPlayers.size === 0) return cachedResult;
+
+    // Log unmatched names so we can add aliases
+    const unmatched = Array.from(allPlayers.entries())
+      .filter(([, v]) => v.id.startsWith('_u_'))
+      .map(([name]) => name)
+      .sort();
+    if (unmatched.length > 0) {
+      console.log(`[odds] ${unmatched.length} unmatched players:`, unmatched.join(', '));
+    }
 
     // Average implied prob across bookmakers, then normalize over ALL players
     const avgImplied = Array.from(allPlayers.values()).map((p) => ({
