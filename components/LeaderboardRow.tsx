@@ -168,17 +168,20 @@ export default function LeaderboardRow({
                           {name}
                         </p>
                         <p className="text-gray-500">
-                          {status.state === 'pre' ? (
-                            <span className="text-gray-300">Pre-Tournament</span>
-                          ) : (
-                            <>
-                              <span className={score?.startsWith('-') ? 'text-red-500 font-medium' : ''}>
-                                {score ?? 'E'}
-                              </span>
-                              {' · '}
-                              <span>{pos}</span>
-                            </>
-                          )}
+                          <span className={score?.startsWith('-') ? 'text-red-500 font-medium' : ''}>
+                            {status.state === 'pre' ? <span className="text-gray-300">—</span> : (score ?? 'E')}
+                          </span>
+                          {' · '}
+                          <span>{status.state === 'pre' ? <span className="text-gray-300">—</span> : pos}</span>
+                        </p>
+                        <p className="mt-0.5 space-x-2">
+                          <span className={liveData?.projectedEarnings ?? 0 > 0 ? 'text-green-700 font-medium' : 'text-gray-300'}>
+                            {liveData?.projectedEarnings ?? 0 > 0 ? liveData!.projectedEarningsDisplay : '$0'}
+                          </span>
+                          <span className="text-gray-300">·</span>
+                          <span className={liveData?.oddsEV ?? 0 > 0 ? 'text-blue-500 font-medium' : 'text-gray-300'}>
+                            {liveData?.oddsEV ?? 0 > 0 ? liveData!.oddsEVDisplay : '—'}
+                          </span>
                         </p>
                       </div>
                     </div>
