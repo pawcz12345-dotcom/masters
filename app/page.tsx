@@ -2,6 +2,7 @@ export const revalidate = 60;
 
 import { fetchESPNLeaderboard } from '@/lib/espn';
 import { computeStandings } from '@/lib/scoring';
+import { fetchOddsEV } from '@/lib/odds';
 import tiersData from '@/data/tiers.json';
 import playersData from '@/data/players.json';
 import picksData from '@/data/picks.json';
@@ -12,7 +13,10 @@ import LastUpdated from '@/components/LastUpdated';
 import type { Tier, Player, Participant, PurseEntry } from '@/lib/types';
 
 export default async function Home() {
-  const espn = await fetchESPNLeaderboard();
+  const [espn, oddsEV] = await Promise.all([
+    fetchESPNLeaderboard(),
+    fetchOddsEV(playersData.players, purseData.payouts as PurseEntry[]),
+  ]);
 
   const standings = computeStandings(
     picksData.participants as Participant[],
@@ -20,7 +24,8 @@ export default async function Home() {
     tiersData.tiers as Tier[],
     espn.competitors,
     purseData.payouts as PurseEntry[],
-    espn.status
+    espn.status,
+    oddsEV
   );
 
   return (

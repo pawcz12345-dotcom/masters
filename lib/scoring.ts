@@ -65,7 +65,10 @@ export function computeStandings(
   tiers: Tier[],
   competitors: ESPNCompetitor[],
   pursePayouts: PurseEntry[],
-  status: ESPNTournamentStatus
+  status: ESPNTournamentStatus,
+  /** Optional odds-based EV map (espnId → expected purse $). When provided,
+   *  replaces position-based projected earnings pre/during tournament. */
+  oddsEV: Map<string, number> | null = null
 ): ParticipantScore[] {
   // Build lookup maps
   const playerMap = new Map<string, Player>(players.map((p) => [p.id, p]));
@@ -110,7 +113,10 @@ export function computeStandings(
 
       if (competitor) {
         const earnings = competitor.earnings ?? 0;
-        const projected = projectedEarnings.get(player.espnId) ?? 0;
+        // Use odds-based EV when available, fall back to position-based
+        const projected = isTournamentComplete
+          ? earnings
+          : (oddsEV?.get(player.espnId) ?? projectedEarnings.get(player.espnId) ?? 0);
         const isCut =
           competitor.status?.type?.state === 'post' &&
           status.period > 2 &&
@@ -130,7 +136,7 @@ export function computeStandings(
           isCut,
         };
 
-        totalEarnings += isTournamentComplete ? earnings : projected;
+        totalEarnings += projected;
       }
 
       return { tier, player, liveData };
