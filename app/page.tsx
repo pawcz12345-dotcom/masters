@@ -7,7 +7,7 @@ import tiersData from '@/data/tiers.json';
 import playersData from '@/data/players.json';
 import picksData from '@/data/picks.json';
 import purseData from '@/data/purse.json';
-import Leaderboard from '@/components/Leaderboard';
+import TabView from '@/components/TabView';
 import TournamentStatus from '@/components/TournamentStatus';
 import LastUpdated from '@/components/LastUpdated';
 import type { Tier, Player, Participant, PurseEntry } from '@/lib/types';
@@ -42,13 +42,13 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Leaderboard */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Standings — {standings.length} participants
-          </h2>
-          <Leaderboard standings={standings} status={espn.status} />
-        </div>
+        <TabView
+          standings={standings}
+          competitors={espn.competitors}
+          players={playersData.players as Player[]}
+          tiers={tiersData.tiers as Tier[]}
+          status={espn.status}
+        />
 
         <p className="text-center text-xs text-gray-300 mt-6">
           Scores update every 60 seconds during play
