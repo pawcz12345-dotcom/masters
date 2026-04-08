@@ -225,8 +225,8 @@ export default function PlayersTab({
             {th('cut', 'Cut %', 'text-right')}
             {th('earnings', 'Live $', 'text-right')}
             {th('ev', 'EV $', 'text-right')}
+            <th className="pb-3 pr-4 text-right text-xs uppercase tracking-wide text-gray-500">Own%</th>
             <th className="pb-3 pr-2 text-right text-xs uppercase tracking-wide text-gray-500">Picked By</th>
-            <th className="pb-3 w-6" />
           </tr>
         </thead>
         <tbody>
@@ -265,6 +265,18 @@ export default function PlayersTab({
                       <p className={`font-medium text-gray-900 whitespace-nowrap ${p.isCut ? 'line-through' : ''}`}>
                         {p.displayName}
                       </p>
+                      <button
+                        onClick={() => toggleExpand(p.espnId)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors ml-1 shrink-0"
+                        aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                      >
+                        <svg
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
                     </div>
                   </td>
 
@@ -328,6 +340,17 @@ export default function PlayersTab({
                     )}
                   </td>
 
+                  {/* Ownership % */}
+                  <td className="py-3 pr-4 text-right tabular-nums font-medium">
+                    {p.pickedBy.length > 0 ? (
+                      <span className="text-gray-600">
+                        {((p.pickedBy.length / standings.length) * 100).toFixed(0)}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+
                   {/* Picked By */}
                   <td className="py-3 pr-2 text-right">
                     {p.pickedBy.length > 0 ? (
@@ -348,21 +371,6 @@ export default function PlayersTab({
                     )}
                   </td>
 
-                  {/* Expand chevron */}
-                  <td className="py-3 w-6">
-                    <button
-                      onClick={() => toggleExpand(p.espnId)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                    >
-                      <svg
-                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </td>
                 </tr>
 
                 {/* Expanded round scores row */}
