@@ -37,10 +37,26 @@ function americanToImplied(american: number): number {
     : 100 / (american + 100);
 }
 
+// Known name mismatches: odds API name (normalized) → our players.json name (normalized)
+const NAME_ALIASES: Record<string, string> = {
+  'matthew fitzpatrick': 'matt fitzpatrick',
+  'matt mccarty':        'matthew mccarty',
+  'john keefer':         'johnny keefer',
+  'nicolas echavarria':  'nico echavarria',
+  'min-woo lee':         'min woo lee',
+};
+
 function normalizeName(name: string): string {
   return name
+    // Explicit substitutions for characters that don't decompose with NFD
+    .replace(/ø/gi, 'o')
+    .replace(/å/gi, 'a')
+    .replace(/æ/gi, 'ae')
+    .replace(/ð/gi, 'd')
+    .replace(/þ/gi, 'th')
+    .replace(/ß/gi, 'ss')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '') // strip combining accents (é→e, ñ→n, etc.)
     .toLowerCase()
     .replace(/[^a-z ]/g, '')
     .replace(/\s+/g, ' ')
@@ -147,10 +163,15 @@ export async function fetchOddsEV(
     const events: OddsEvent[] = await res.json();
     if (!events || events.length === 0) return cachedResult;
 
-    // Build name → espnId lookup
+    // Build name → espnId lookup (canonical name + known aliases)
     const nameToEspnId = new Map<string, string>();
     for (const p of players) {
-      nameToEspnId.set(normalizeName(p.displayName), p.espnId);
+      const canonical = normalizeName(p.displayName);
+      nameToEspnId.set(canonical, p.espnId);
+      // Register any alias that maps to this canonical name
+      for (const [alias, target] of Object.entries(NAME_ALIASES)) {
+        if (target === canonical) nameToEspnId.set(alias, p.espnId);
+      }
     }
 
     // Collect ALL players from the odds feed (matched + unmatched)
