@@ -38,13 +38,15 @@ export default function TabView({
   const [activeRound, setActiveRound] = useState<number>(99); // default: Live
   const [contentTab, setContentTab] = useState<ContentTab>('standings');
 
-  // Build lookup of available rounds
+  // Pre (0) and Live (99) are always available; R1-R4 only when snapshot exists
   const availableRounds = new Set<number>([
+    0,   // Pre always available
     ...snapshotRounds.map((r) => r.round),
-    99, // Live always available
+    99,  // Live always available
   ]);
 
   // Get data for currently selected round
+  // Pre with no snapshot → fall back to live data
   const roundData =
     activeRound === 99
       ? liveRound
@@ -94,7 +96,7 @@ export default function TabView({
                 <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-300' : 'bg-green-500'} animate-pulse`} />
               )}
               {label}
-              {!isLiveTab && available && !isActive && (
+              {!isLiveTab && round > 0 && available && !isActive && (
                 <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>

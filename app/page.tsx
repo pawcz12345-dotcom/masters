@@ -96,7 +96,7 @@ export default async function Home() {
             Masters 2026 Pool
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
-            <TournamentStatus status={espn.status} />
+            {espn.status.state !== 'pre' && <TournamentStatus status={espn.status} />}
             <LastUpdated lastFetched={espn.lastFetched} />
           </div>
         </div>
