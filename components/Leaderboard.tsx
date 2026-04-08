@@ -3,6 +3,18 @@ import type { ParticipantScore, ESPNTournamentStatus } from '@/lib/types';
 
 const POOL_BUY_IN = 10;
 
+const tooltipStyle: React.CSSProperties = {
+  backgroundColor: '#1f2937',
+  color: '#ffffff',
+  fontSize: '13px',
+  fontWeight: 400,
+  textTransform: 'none',
+  letterSpacing: 'normal',
+  textAlign: 'left',
+  lineHeight: '1.5',
+  width: '360px',
+};
+
 function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="relative inline-block group align-middle ml-1">
@@ -10,17 +22,8 @@ function InfoTooltip({ text }: { text: string }) {
         i
       </span>
       <span
-        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 rounded px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg"
-        style={{
-          backgroundColor: '#1f2937',
-          color: '#ffffff',
-          fontSize: '12px',
-          fontWeight: 400,
-          textTransform: 'none',
-          letterSpacing: 'normal',
-          textAlign: 'left',
-          lineHeight: '1.4',
-        }}
+        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-xl"
+        style={tooltipStyle}
       >
         {text}
       </span>
@@ -47,7 +50,7 @@ export default function Leaderboard({
   const purseLabel = tournamentOver ? 'Purse' : 'Projected Purse';
   const payoutLabel = tournamentOver ? 'Payout' : 'Projected Payout';
 
-  // Build player ownership map: playerId → count of participants who picked them
+  // Build player ownership map
   const ownershipCount = new Map<string, number>();
   for (const s of standings) {
     for (const pick of s.picks) {
@@ -56,7 +59,6 @@ export default function Leaderboard({
     }
   }
 
-  // For each participant, sum ownership % across all their picks
   const ownershipByParticipant = new Map<string, number>();
   for (const s of standings) {
     let total = 0;
@@ -72,19 +74,28 @@ export default function Leaderboard({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500 text-xs uppercase tracking-wide">
-            <th className="pb-3 pr-4 w-12">Rank</th>
-            <th className="pb-3 pr-4">Participant</th>
-            <th className="pb-3 pr-4 text-center whitespace-nowrap">
+            <th className="pb-3 pr-6 w-12">Rank</th>
+            <th className="pb-3 pr-6">Participant</th>
+            <th className="pb-3 pr-6 text-center whitespace-nowrap">
               {cutsLabel}
-              <InfoTooltip text="X/10 players projected to make the cut. 10/10 means all your picks are still in the tournament." />
+              <InfoTooltip text="X/10 — how many of your picked players are projected to survive the cut. Goes from projected during Rounds 1–2 to confirmed after the cut is made." />
             </th>
-            <th className="pb-3 pr-4 text-right">Score</th>
-            <th className="pb-3 pr-4 text-right whitespace-nowrap">
+            <th className="pb-3 pr-6 text-right whitespace-nowrap">
               Ownership
-              <InfoTooltip text="Sum of each pick's ownership % across all participants. Lower = more contrarian lineup." />
+              <InfoTooltip text="Sum of each pick's ownership % across all participants. For example, if Rory was picked by 3 of 11 players, his ownership is 27.3%. Your total is the sum across all 10 picks. Lower = more contrarian lineup." />
             </th>
-            <th className="pb-3 pr-4 text-right">{purseLabel}</th>
-            <th className="pb-3 text-right">{payoutLabel}</th>
+            <th className="pb-3 pr-6 text-right whitespace-nowrap">
+              Score
+              <InfoTooltip text="Combined score vs par for all 10 of your picks. Calculated as the sum of each player's current score-to-par. Red = under par (good), gray = over par." />
+            </th>
+            <th className="pb-3 pr-6 text-right whitespace-nowrap">
+              {purseLabel}
+              <InfoTooltip text="Total projected tournament prize money your picks would earn based on their current leaderboard positions. Uses the Masters purse payout schedule with ties split evenly. Updates to final earnings after Round 4." />
+            </th>
+            <th className="pb-3 text-right whitespace-nowrap">
+              {payoutLabel}
+              <InfoTooltip text={`Winner-take-all pool prize. Total pot is $${totalPot} (${totalParticipants} players × $${POOL_BUY_IN}). If multiple participants are tied for 1st place, the pot is split evenly between them.`} />
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -98,7 +109,6 @@ export default function Leaderboard({
               alive === total ? 'text-green-600' : alive === 0 ? 'text-red-500' : 'text-yellow-600';
 
             const ownership = ownershipByParticipant.get(s.participant.id) ?? 0;
-            const ownershipDisplay = `${ownership.toFixed(1)}%`;
 
             return (
               <tr
@@ -107,12 +117,12 @@ export default function Leaderboard({
                   i === 0 && s.totalEarnings > 0 ? 'bg-yellow-50' : ''
                 }`}
               >
-                <td className="py-4 pr-4">
+                <td className="py-4 pr-6">
                   <span className={`font-semibold ${isTop3 ? 'text-yellow-600' : 'text-gray-600'}`}>
                     {s.rankDisplay}
                   </span>
                 </td>
-                <td className="py-4 pr-4">
+                <td className="py-4 pr-6">
                   <Link
                     href={`/participant/${s.participant.slug}`}
                     className="font-medium text-gray-900 hover:text-green-700 hover:underline"
@@ -120,10 +130,13 @@ export default function Leaderboard({
                     {s.participant.teamName ?? s.participant.name}
                   </Link>
                 </td>
-                <td className={`py-4 pr-4 text-center font-medium tabular-nums ${cutsColor}`}>
+                <td className={`py-4 pr-6 text-center font-medium tabular-nums ${cutsColor}`}>
                   {alive}/{total}
                 </td>
-                <td className="py-4 pr-4 text-right font-medium tabular-nums">
+                <td className="py-4 pr-6 text-right font-medium tabular-nums text-gray-600">
+                  {ownership.toFixed(1)}%
+                </td>
+                <td className="py-4 pr-6 text-right font-medium tabular-nums">
                   {status.state === 'pre' ? (
                     <span className="text-gray-300">—</span>
                   ) : (
@@ -132,10 +145,7 @@ export default function Leaderboard({
                     </span>
                   )}
                 </td>
-                <td className="py-4 pr-4 text-right font-medium tabular-nums text-gray-600">
-                  {ownershipDisplay}
-                </td>
-                <td className="py-4 pr-4 text-right font-medium tabular-nums">
+                <td className="py-4 pr-6 text-right font-medium tabular-nums">
                   {s.totalEarnings > 0 ? (
                     <span className="text-green-700">{s.totalEarningsDisplay}</span>
                   ) : (
