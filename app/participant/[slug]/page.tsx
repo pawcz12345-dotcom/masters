@@ -41,13 +41,12 @@ export default async function ParticipantPage({
     espn.competitors,
     purseData.payouts as PurseEntry[],
     espn.status,
-    oddsEV  // OddsResult | null
+    oddsEV
   );
 
   const myScore = standings.find((s) => s.participant.slug === slug);
   if (!myScore) notFound();
 
-  // Build ownership count: playerId → how many participants picked them
   const ownershipCount = new Map<string, number>();
   for (const s of standings) {
     for (const pick of s.picks) {
@@ -60,51 +59,55 @@ export default async function ParticipantPage({
   const tierRankings = computeTierRankings(standings);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-6 py-8">
+    <main className="min-h-screen bg-slate-950">
+      {/* Accent bar */}
+      <div className="h-0.5 bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-700" />
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Back link */}
         <Link
           href="/"
-          className="text-sm text-gray-400 hover:text-gray-600 mb-6 inline-flex items-center gap-1"
+          className="text-sm text-slate-500 hover:text-slate-300 mb-6 inline-flex items-center gap-1 transition-colors"
         >
           ← Leaderboard
         </Link>
 
         {/* Header */}
-        <div className="mb-6 mt-4">
+        <div className="mb-6 mt-4 bg-slate-900 rounded-xl border border-slate-700/50 p-5 sm:p-6">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 {myScore.participant.teamName ?? myScore.participant.name}
               </h1>
               {myScore.participant.teamName && (
-                <p className="text-sm text-gray-400 mt-0.5">{myScore.participant.name}</p>
+                <p className="text-sm text-slate-500 mt-0.5">{myScore.participant.name}</p>
               )}
-              <div className="flex items-center gap-3 mt-2 flex-wrap">
-                <TournamentStatus status={espn.status} />
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                {espn.status.state !== 'pre' && <TournamentStatus status={espn.status} />}
                 <LastUpdated lastFetched={espn.lastFetched} />
               </div>
             </div>
-            <div className="text-right space-y-1">
+            <div className="text-right space-y-2">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">Live Purse</p>
-                <p className="text-2xl font-bold text-green-700 tabular-nums">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Live Purse</p>
+                <p className="text-2xl font-bold text-emerald-400 tabular-nums">
                   {myScore.totalEarnings > 0 ? myScore.totalEarningsDisplay : '$0'}
                 </p>
               </div>
               {myScore.oddsEV > 0 && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">EV Purse</p>
-                  <p className="text-lg font-semibold text-blue-600 tabular-nums">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">EV Purse</p>
+                  <p className="text-lg font-semibold text-sky-400 tabular-nums">
                     {myScore.oddsEVDisplay}
                   </p>
                 </div>
               )}
-              <p className="text-sm text-gray-500">
-                <span className="font-medium">{myScore.rankDisplay}</span> of {totalParticipants}
+              <p className="text-sm text-slate-400">
+                <span className="font-semibold text-slate-200">{myScore.rankDisplay}</span>
+                <span className="text-slate-600"> / {totalParticipants}</span>
               </p>
               {espn.status.state !== 'pre' && (
-                <p className={`text-sm font-medium ${myScore.totalScoreToPar < 0 ? 'text-red-600' : myScore.totalScoreToPar > 0 ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm font-medium ${myScore.totalScoreToPar < 0 ? 'text-red-400' : myScore.totalScoreToPar > 0 ? 'text-slate-500' : 'text-slate-300'}`}>
                   {myScore.totalScoreDisplay} combined
                 </p>
               )}

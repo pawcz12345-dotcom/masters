@@ -37,12 +37,10 @@ export default async function Home() {
   const tiers = tiersData.tiers as Tier[];
   const purse = purseData.payouts as PurseEntry[];
 
-  // Live standings
   const liveStandings = computeStandings(
     participants, players, tiers, espn.competitors, purse, espn.status, oddsEV
   );
 
-  // Serialize odds maps for client components
   const evRecord: Record<string, number> = {};
   const cutProbRecord: Record<string, number> = {};
   if (oddsEV) {
@@ -50,7 +48,6 @@ export default async function Home() {
     for (const [k, v] of oddsEV.cutProb) cutProbRecord[k] = v;
   }
 
-  // Build round data from snapshots
   const rawSnapshots: { raw: unknown; round: number }[] = [
     { raw: r0Raw, round: 0 },
     { raw: r1Raw, round: 1 },
@@ -78,7 +75,6 @@ export default async function Home() {
     return [entry];
   });
 
-  // Live round entry
   const liveRound: RoundData = {
     round: 99,
     label: 'Live',
@@ -92,11 +88,16 @@ export default async function Home() {
   const isLive = espn.status.state === 'in';
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-slate-950">
+      {/* Accent bar */}
+      <div className="h-0.5 bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-700" />
+
       <AutoRefresh enabled={isLive} />
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-2">
             Masters 2026 Pool
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
@@ -113,7 +114,7 @@ export default async function Home() {
           tiers={tiers}
         />
 
-        <p className="text-center text-xs text-gray-300 mt-6">
+        <p className="text-center text-xs text-slate-700 mt-6">
           Scores update every 60 seconds during play
         </p>
       </div>

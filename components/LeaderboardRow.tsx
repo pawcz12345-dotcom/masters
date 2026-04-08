@@ -43,98 +43,96 @@ export default function LeaderboardRow({
   return (
     <>
       <tr
-        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-          index === 0 && s.totalEarnings > 0 ? 'bg-yellow-50' : ''
-        }`}
+        className={`border-b border-slate-800 transition-colors cursor-pointer ${
+          isLeading && s.totalEarnings > 0
+            ? 'bg-amber-950/20 hover:bg-amber-950/30'
+            : 'hover:bg-slate-800/40'
+        } ${expanded ? (isLeading && s.totalEarnings > 0 ? 'bg-amber-950/30' : 'bg-slate-800/30') : ''}`}
+        onClick={() => setExpanded((v) => !v)}
       >
         {/* Rank */}
-        <td className="py-4 pr-6">
-          <span className={`font-semibold ${isTop3 ? 'text-yellow-600' : 'text-gray-600'}`}>
+        <td className="py-4 pr-4 sm:pr-6 pl-4 sm:pl-0">
+          <span className={`font-bold tabular-nums text-sm ${
+            isTop3 && s.totalEarnings > 0
+              ? 'text-amber-400'
+              : 'text-slate-400'
+          }`}>
             {s.rankDisplay}
           </span>
         </td>
 
         {/* Participant */}
-        <td className="py-4 pr-6">
+        <td className="py-4 pr-4 sm:pr-6">
           <div className="flex items-center gap-2">
             <Link
               href={`/participant/${s.participant.slug}`}
-              className="font-medium text-gray-900 hover:text-green-700 hover:underline"
+              className="font-semibold text-slate-100 hover:text-emerald-400 transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
               {s.participant.teamName ?? s.participant.name}
             </Link>
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-              aria-label={expanded ? 'Collapse picks' : 'Expand picks'}
-            >
-              <svg
-                className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
+            <span className={`text-slate-600 transition-transform inline-block ${expanded ? 'rotate-180' : ''}`}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </span>
           </div>
         </td>
 
-        {/* Cuts */}
-        <td className={`py-4 pr-6 text-center font-medium tabular-nums ${cutsColor}`}>
+        {/* Cuts — hidden on mobile */}
+        <td className={`py-4 pr-4 sm:pr-6 text-center font-medium tabular-nums text-sm hidden md:table-cell ${cutsColor}`}>
           {alive}/{total}
         </td>
 
-        {/* Ownership */}
-        <td className="py-4 pr-6 text-right font-medium tabular-nums text-gray-600">
+        {/* Ownership — hidden on mobile */}
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm text-slate-400 hidden md:table-cell">
           {ownershipDisplay}
         </td>
 
-        {/* Score */}
-        <td className="py-4 pr-6 text-right font-medium tabular-nums">
+        {/* Score — hidden on mobile */}
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm hidden md:table-cell">
           {status.state === 'pre' ? (
-            <span className="text-gray-300">—</span>
+            <span className="text-slate-700">—</span>
           ) : (
-            <span className={s.totalScoreToPar < 0 ? 'text-red-600' : s.totalScoreToPar > 0 ? 'text-gray-500' : 'text-gray-700'}>
+            <span className={s.totalScoreToPar < 0 ? 'text-red-400' : s.totalScoreToPar > 0 ? 'text-slate-500' : 'text-slate-300'}>
               {s.totalScoreDisplay}
             </span>
           )}
         </td>
 
-        {/* EV Purse */}
-        <td className="py-4 pr-6 text-right font-medium tabular-nums">
+        {/* EV Purse — hidden on mobile */}
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm hidden md:table-cell">
           {s.oddsEV > 0 ? (
-            <span className="text-blue-600">{s.oddsEVDisplay}</span>
+            <span className="text-sky-400">{s.oddsEVDisplay}</span>
           ) : (
-            <span className="text-gray-300">—</span>
+            <span className="text-slate-700">—</span>
           )}
         </td>
 
         {/* Live Purse */}
-        <td className="py-4 pr-6 text-right font-medium tabular-nums">
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm">
           {s.totalEarnings > 0 ? (
-            <span className="text-green-700">{s.totalEarningsDisplay}</span>
+            <span className="text-emerald-400">{s.totalEarningsDisplay}</span>
           ) : (
-            <span className="text-gray-400">$0</span>
+            <span className="text-slate-600">$0</span>
           )}
         </td>
 
         {/* Projected Payout */}
-        <td className="py-4 text-right font-medium tabular-nums">
+        <td className="py-4 text-right font-medium tabular-nums text-sm">
           {isLeading ? (
-            <span className="text-yellow-600">${projectedPayout.toLocaleString()}</span>
+            <span className="text-amber-400 font-bold">${projectedPayout.toLocaleString()}</span>
           ) : (
-            <span className="text-gray-300">—</span>
+            <span className="text-slate-700">—</span>
           )}
         </td>
       </tr>
 
       {/* Expanded picks */}
       {expanded && (
-        <tr className="bg-gray-50 border-b border-gray-100">
-          <td colSpan={colSpan} className="px-6 py-3">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-6 gap-y-2">
+        <tr className="border-b border-slate-800 bg-slate-800/20">
+          <td colSpan={colSpan} className="px-4 sm:px-6 py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 gap-y-4">
               {s.picks.map(({ tier, player, liveData }) => {
                 const isCut = liveData?.isCut ?? false;
                 const score = liveData?.scoreDisplay;
@@ -147,11 +145,11 @@ export default function LeaderboardRow({
 
                 return (
                   <div key={tier.id} className={`text-xs ${isCut ? 'opacity-40' : ''}`}>
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <p className="text-gray-400 font-medium uppercase tracking-wide text-[10px]">
+                    <div className="flex items-center justify-between gap-1 mb-2">
+                      <p className="text-slate-500 font-medium uppercase tracking-wider text-[10px]">
                         {tier.name}
                       </p>
-                      <p className="text-gray-400 text-[10px]">{pct}%</p>
+                      <p className="text-slate-600 text-[10px]">{pct}%</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <img
@@ -159,35 +157,35 @@ export default function LeaderboardRow({
                         alt={name}
                         width={32}
                         height={32}
-                        className="rounded-full object-cover bg-gray-100 shrink-0"
+                        className="rounded-full object-cover bg-slate-700 shrink-0 ring-1 ring-slate-600"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                       <div>
-                        <p className={`font-semibold text-gray-800 truncate ${isCut ? 'line-through' : ''}`}>
+                        <p className={`font-semibold leading-tight ${isCut ? 'line-through text-slate-600' : 'text-slate-200'}`}>
                           {emoji && <span className="mr-1">{emoji}</span>}
                           {name}
                         </p>
-                        <p className="text-gray-500">
-                          <span className={score?.startsWith('-') ? 'text-red-500 font-medium' : ''}>
-                            {status.state === 'pre' ? <span className="text-gray-300">—</span> : (score ?? 'E')}
+                        <p className="text-slate-500 mt-0.5">
+                          <span className={score?.startsWith('-') ? 'text-red-400 font-medium' : 'text-slate-400'}>
+                            {status.state === 'pre' ? <span className="text-slate-700">—</span> : (score ?? 'E')}
                           </span>
                           {' · '}
-                          <span>{status.state === 'pre' ? <span className="text-gray-300">—</span> : pos}</span>
+                          <span className="text-slate-500">{status.state === 'pre' ? <span className="text-slate-700">—</span> : pos}</span>
                         </p>
-                        <p className="mt-0.5 space-x-2 text-[11px]">
-                          <span className={liveData?.projectedEarnings ?? 0 > 0 ? 'text-green-700 font-medium' : 'text-gray-300'}>
+                        <p className="mt-1 flex items-center gap-1.5 text-[11px]">
+                          <span className={liveData?.projectedEarnings ?? 0 > 0 ? 'text-emerald-400 font-medium' : 'text-slate-700'}>
                             {liveData?.projectedEarnings ?? 0 > 0 ? liveData!.projectedEarningsDisplay : '$0'}
                           </span>
-                          <span className="text-gray-300">·</span>
-                          <span className={liveData?.oddsEV ?? 0 > 0 ? 'text-blue-500 font-medium' : 'text-gray-300'}>
+                          <span className="text-slate-700">·</span>
+                          <span className={liveData?.oddsEV ?? 0 > 0 ? 'text-sky-400 font-medium' : 'text-slate-700'}>
                             {liveData?.oddsEV ?? 0 > 0 ? liveData!.oddsEVDisplay : '—'}
                           </span>
                           {liveData?.cutProbability != null && liveData.cutProbability > 0 && (
                             <>
-                              <span className="text-gray-300">·</span>
+                              <span className="text-slate-700">·</span>
                               <span className={
-                                liveData.cutProbability >= 0.75 ? 'text-green-600 font-medium' :
-                                liveData.cutProbability >= 0.50 ? 'text-yellow-600 font-medium' : 'text-red-500 font-medium'
+                                liveData.cutProbability >= 0.75 ? 'text-emerald-400 font-medium' :
+                                liveData.cutProbability >= 0.50 ? 'text-amber-400 font-medium' : 'text-red-400 font-medium'
                               }>
                                 {(liveData.cutProbability * 100).toFixed(0)}% cut
                               </span>

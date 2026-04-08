@@ -12,7 +12,6 @@ const CONTENT_TABS: { id: ContentTab; label: string }[] = [
   { id: 'players', label: 'Players' },
 ];
 
-// All possible rounds in display order
 const ALL_ROUNDS = [
   { round: 0, label: 'Pre' },
   { round: 1, label: 'R1' },
@@ -39,15 +38,12 @@ export default function TabView({
   const [activeRound, setActiveRound] = useState<number>(isPreTournament ? 0 : 99);
   const [contentTab, setContentTab] = useState<ContentTab>('standings');
 
-  // Pre (0) always available; Live (99) only once tournament starts; R1-R4 when snapshot exists
   const availableRounds = new Set<number>([
     0,
     ...snapshotRounds.map((r) => r.round),
     ...(isPreTournament ? [] : [99]),
   ]);
 
-  // Get data for currently selected round
-  // Pre with no snapshot → fall back to live data
   const roundData =
     activeRound === 99
       ? liveRound
@@ -56,21 +52,20 @@ export default function TabView({
   const isLive = activeRound === 99;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div className="bg-slate-900 rounded-xl border border-slate-700/50 overflow-hidden">
 
       {/* Round selector */}
-      <div className="flex items-center gap-1 px-6 pt-4 pb-0 flex-wrap border-b border-gray-100">
+      <div className="flex items-center gap-1 px-4 sm:px-6 pt-4 pb-0 flex-wrap border-b border-slate-700/50">
         {ALL_ROUNDS.map(({ round, label }) => {
           const available = availableRounds.has(round);
           const isActive = activeRound === round;
           const isLiveTab = round === 99;
 
           if (!available) {
-            // Greyed out — round hasn't happened yet
             return (
               <div
                 key={round}
-                className="px-3 py-1.5 mb-3 rounded-full text-xs font-medium text-gray-300 cursor-not-allowed select-none flex items-center gap-1"
+                className="px-3 py-1.5 mb-3 rounded-full text-xs font-medium text-slate-600 cursor-not-allowed select-none flex items-center gap-1"
                 title="Not yet available"
               >
                 {label}
@@ -85,20 +80,20 @@ export default function TabView({
             <button
               key={round}
               onClick={() => setActiveRound(round)}
-              className={`px-3 py-1.5 mb-3 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+              className={`px-3 py-1.5 mb-3 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
                 isActive
                   ? isLiveTab
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-800 text-white'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-700 text-white'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
               {isLiveTab && currentStatus.state === 'in' && (
-                <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-300' : 'bg-green-500'} animate-pulse`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-300' : 'bg-emerald-500'} animate-pulse`} />
               )}
               {label}
               {!isLiveTab && round > 0 && available && !isActive && (
-                <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-3 h-3 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               )}
@@ -109,7 +104,7 @@ export default function TabView({
         {/* Spacer + snapshot timestamp */}
         <div className="ml-auto mb-3">
           {!isLive && roundData.savedAt && (
-            <span className="text-[10px] text-gray-400">
+            <span className="text-[10px] text-slate-600">
               Snapshot: {new Date(roundData.savedAt).toLocaleDateString('en-US', {
                 month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
               })}
@@ -118,16 +113,16 @@ export default function TabView({
         </div>
       </div>
 
-      {/* Content tabs (Standings / Players) */}
-      <div className="flex border-b border-gray-200 px-6">
+      {/* Content tabs */}
+      <div className="flex border-b border-slate-700/50 px-4 sm:px-6">
         {CONTENT_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setContentTab(tab.id)}
             className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors -mb-px ${
               contentTab === tab.id
-                ? 'border-green-600 text-green-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-emerald-500 text-emerald-400'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
             }`}
           >
             {tab.label}
@@ -136,10 +131,10 @@ export default function TabView({
       </div>
 
       {/* Content */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {contentTab === 'standings' && (
           <>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
               {roundData.standings.length} participants
             </p>
             <Leaderboard standings={roundData.standings} status={roundData.status} />
@@ -147,7 +142,7 @@ export default function TabView({
         )}
         {contentTab === 'players' && (
           <>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
               {roundData.competitors.length} players in the field
             </p>
             <PlayersTab
