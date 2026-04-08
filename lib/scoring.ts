@@ -17,6 +17,11 @@ function computeProjectedEarnings(
 ): Map<string, number> {
   const projected = new Map<string, number>();
 
+  // Show $0 until the tournament is actually underway
+  if (status.state === 'pre') {
+    return projected;
+  }
+
   if (status.state === 'post' && status.period >= 4) {
     // Tournament complete — use real earnings
     for (const c of competitors) {
