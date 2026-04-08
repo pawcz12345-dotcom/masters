@@ -155,7 +155,7 @@ export default function Leaderboard({
               'cuts',
               <>
                 {cutsLabel}
-                <InfoTooltip text="X/10 — how many of your picked players are projected to survive the cut. Goes from projected during Rounds 1–2 to confirmed after the cut is made." />
+                <InfoTooltip text="How many of your 10 players made (or are projected to make) the cut and keep playing on the weekend. More is better." />
               </>,
               'text-center'
             )}
@@ -163,7 +163,7 @@ export default function Leaderboard({
               'ownership',
               <>
                 Ownership
-                <InfoTooltip text="Sum of each pick's ownership % across all participants. For example, if Rory was picked by 3 of 11 players, his ownership is 27.3%. Your total is the sum across all 10 picks. Lower = more contrarian lineup." />
+                <InfoTooltip text="How popular your picks are compared to everyone else. If a player was picked by half the pool, that's 50% ownership toward your total. Lower = you went more unique, which pays off more if those players outperform." />
               </>,
               'text-right'
             )}
@@ -171,7 +171,7 @@ export default function Leaderboard({
               'score',
               <>
                 Score
-                <InfoTooltip text="Combined score vs par for all 10 of your picks. Calculated as the sum of each player's current score-to-par. Red = under par (good), gray = over par." />
+                <InfoTooltip text="The combined score of all 10 of your players added together. Red means under par (good), gray means over par." />
               </>,
               'text-right'
             )}
@@ -179,7 +179,7 @@ export default function Leaderboard({
               'evPurse',
               <>
                 EV Purse
-                <InfoTooltip text="Odds-based expected purse. Uses betting market win probabilities (vig stripped), then runs a Harville simulation to estimate each player's probability of finishing in every position. EV = Σ P(finish k) × purse[k]. Updates every 2 hours from live odds." />
+                <InfoTooltip text="How much prize money your picks are expected to earn based on current betting odds. Think of it as a forecast — if the tournament played out 1,000 times using today's odds, this is the average result. Updates every 2 hours." />
               </>,
               'text-right'
             )}
@@ -187,7 +187,7 @@ export default function Leaderboard({
               'livePurse',
               <>
                 Live Purse
-                <InfoTooltip text="What your picks would earn if the tournament ended right now, based on current leaderboard positions. This drives your pool rank and projected payout." />
+                <InfoTooltip text="How much prize money your picks would earn if the tournament ended right now. This is what determines your rank and whether you win the pool." />
               </>,
               'text-right'
             )}
@@ -195,7 +195,7 @@ export default function Leaderboard({
               'payout',
               <>
                 {payoutLabel}
-                <InfoTooltip text={`Winner-take-all pool prize based on current Live Purse standings. Total pot is $${totalPot} (${totalParticipants} players × $${POOL_BUY_IN}). Split evenly if tied for 1st.`} />
+                <InfoTooltip text={`What you'd win if the tournament ended right now. The full $${totalPot} pot goes to whoever is in 1st place — split evenly if there's a tie.`} />
               </>,
               'text-right'
             )}
