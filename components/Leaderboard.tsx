@@ -1,7 +1,13 @@
 import Link from 'next/link';
 import type { ParticipantScore } from '@/lib/types';
 
+const POOL_BUY_IN = 10;
+
 export default function Leaderboard({ standings }: { standings: ParticipantScore[] }) {
+  const totalPot = standings.length * POOL_BUY_IN;
+  const tied1stCount = standings.filter((s) => s.rank === 1 && s.totalEarnings > 0).length;
+  const projectedPayout = tied1stCount > 0 ? totalPot / tied1stCount : totalPot;
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -9,12 +15,14 @@ export default function Leaderboard({ standings }: { standings: ParticipantScore
           <tr className="border-b border-gray-200 text-left text-gray-500 text-xs uppercase tracking-wide">
             <th className="pb-3 pr-4 w-12">Rank</th>
             <th className="pb-3 pr-4">Participant</th>
-            <th className="pb-3 text-right">Projected Earnings</th>
+            <th className="pb-3 pr-4 text-right">Projected Purse</th>
+            <th className="pb-3 text-right">Projected Payout</th>
           </tr>
         </thead>
         <tbody>
           {standings.map((s, i) => {
             const isTop3 = s.rank <= 3 && s.totalEarnings > 0;
+            const isLeading = s.rank === 1 && s.totalEarnings > 0;
             return (
               <tr
                 key={s.participant.id}
@@ -23,11 +31,7 @@ export default function Leaderboard({ standings }: { standings: ParticipantScore
                 }`}
               >
                 <td className="py-4 pr-4">
-                  <span
-                    className={`font-semibold ${
-                      isTop3 ? 'text-yellow-600' : 'text-gray-600'
-                    }`}
-                  >
+                  <span className={`font-semibold ${isTop3 ? 'text-yellow-600' : 'text-gray-600'}`}>
                     {s.rankDisplay}
                   </span>
                 </td>
@@ -42,11 +46,18 @@ export default function Leaderboard({ standings }: { standings: ParticipantScore
                     <p className="text-xs text-gray-400 mt-0.5">{s.participant.teamName}</p>
                   )}
                 </td>
-                <td className="py-4 text-right font-medium tabular-nums">
+                <td className="py-4 pr-4 text-right font-medium tabular-nums">
                   {s.totalEarnings > 0 ? (
                     <span className="text-green-700">{s.totalEarningsDisplay}</span>
                   ) : (
                     <span className="text-gray-400">$0</span>
+                  )}
+                </td>
+                <td className="py-4 text-right font-medium tabular-nums">
+                  {isLeading ? (
+                    <span className="text-yellow-600">${projectedPayout.toLocaleString()}</span>
+                  ) : (
+                    <span className="text-gray-300">—</span>
                   )}
                 </td>
               </tr>
