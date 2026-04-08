@@ -220,6 +220,8 @@ export default function Leaderboard({
                 ownershipDisplay={ownershipDisplay}
                 status={status}
                 colSpan={8}
+                ownershipCount={ownershipCount}
+                totalParticipants={totalParticipants}
               />
             );
           })}

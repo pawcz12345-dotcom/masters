@@ -16,6 +16,8 @@ interface Props {
   ownershipDisplay: string;
   status: ESPNTournamentStatus;
   colSpan: number;
+  ownershipCount: Map<string, number>;
+  totalParticipants: number;
 }
 
 export default function LeaderboardRow({
@@ -30,6 +32,8 @@ export default function LeaderboardRow({
   ownershipDisplay,
   status,
   colSpan,
+  ownershipCount,
+  totalParticipants,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
@@ -133,12 +137,17 @@ export default function LeaderboardRow({
                 const score = liveData?.scoreDisplay;
                 const pos = isCut ? 'CUT' : (liveData?.position ?? '—');
                 const name = liveData?.displayName ?? player.displayName;
+                const pickCount = ownershipCount.get(player.id) ?? 0;
+                const pct = ((pickCount / totalParticipants) * 100).toFixed(0);
 
                 return (
                   <div key={tier.id} className={`text-xs ${isCut ? 'opacity-40' : ''}`}>
-                    <p className="text-gray-400 font-medium uppercase tracking-wide text-[10px]">
-                      {tier.name}
-                    </p>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-gray-400 font-medium uppercase tracking-wide text-[10px]">
+                        {tier.name}
+                      </p>
+                      <p className="text-gray-400 text-[10px]">{pct}%</p>
+                    </div>
                     <p className={`font-semibold text-gray-800 truncate ${isCut ? 'line-through' : ''}`}>
                       {name}
                     </p>
