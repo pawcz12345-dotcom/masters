@@ -12,6 +12,7 @@ import purseData from '@/data/purse.json';
 import TournamentStatus from '@/components/TournamentStatus';
 import ParticipantDetail from '@/components/ParticipantDetail';
 import LastUpdated from '@/components/LastUpdated';
+import { computeTierRankings } from '@/lib/utils';
 import type { Tier, Player, Participant, PurseEntry } from '@/lib/types';
 
 export async function generateStaticParams() {
@@ -56,6 +57,7 @@ export default async function ParticipantPage({
   }
 
   const totalParticipants = standings.length;
+  const tierRankings = computeTierRankings(standings);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -116,6 +118,7 @@ export default async function ParticipantPage({
           ownershipCount={ownershipCount}
           totalParticipants={totalParticipants}
           tournamentState={espn.status.state}
+          tierRankings={tierRankings}
         />
       </div>
     </main>

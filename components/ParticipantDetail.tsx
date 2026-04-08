@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import type { ParticipantScore } from '@/lib/types';
+import { getTierEmoji, type TierRankMap } from '@/lib/utils';
 
-// Map ESPN stat names → friendly labels and display order
+// Map ESPN stat names → friendly labels
 const STAT_MAP: Record<string, string> = {
   R1: 'R1',
   R2: 'R2',
@@ -25,14 +26,20 @@ const STAT_MAP: Record<string, string> = {
   scrambling: 'Scrambling',
 };
 
-// Stats shown prominently as round scores vs in the grid
 const ROUND_STATS = new Set(['R1', 'R2', 'R3', 'R4']);
+
+// Placeholder stats shown pre-tournament so users can see what will appear
+const PLACEHOLDER_STATS = [
+  'Driving Dist', 'FIR %', 'GIR %', 'Putts/Rnd',
+  'Eagles', 'Birdies', 'Bogeys', 'Doubles+',
+];
 
 interface Props {
   score: ParticipantScore;
   ownershipCount: Map<string, number>;
   totalParticipants: number;
   tournamentState: 'pre' | 'in' | 'post';
+  tierRankings: TierRankMap;
 }
 
 export default function ParticipantDetail({
@@ -40,6 +47,7 @@ export default function ParticipantDetail({
   ownershipCount,
   totalParticipants,
   tournamentState,
+  tierRankings,
 }: Props) {
   const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set());
 
@@ -52,22 +60,28 @@ export default function ParticipantDetail({
     });
   }
 
+  const isPreTournament = tournamentState === 'pre';
+
   return (
     <div className="space-y-3">
       {score.picks.map(({ tier, player, liveData }) => {
         const pickCount = ownershipCount.get(player.id) ?? 0;
         const ownershipPct = ((pickCount / totalParticipants) * 100).toFixed(1);
         const isCut = liveData?.isCut ?? false;
-        const isPreTournament = tournamentState === 'pre';
         const isExpanded = expandedTiers.has(tier.id);
 
-        // Pull interesting stats from ESPN statistics array
+        const tierKey = `${tier.id}:${player.id}`;
+        const tierRank = tierRankings.get(tierKey);
+        const emoji = isPreTournament
+          ? ''
+          : getTierEmoji(tierRank?.rank ?? 99, tierRank?.total ?? 99, isCut);
+
+        // ESPN stats
         const stats = (liveData?.statistics ?? []).filter(
           (s) => STAT_MAP[s.name] && s.displayValue && s.displayValue !== '--'
         );
         const roundStats = stats.filter((s) => ROUND_STATS.has(s.name));
         const otherStats = stats.filter((s) => !ROUND_STATS.has(s.name));
-        const hasStats = stats.length > 0 && !isPreTournament;
 
         return (
           <div
@@ -79,7 +93,7 @@ export default function ParticipantDetail({
             {/* Main card */}
             <div className="px-5 py-4">
               {/* Top row: tier label + ownership */}
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   {tier.name}
                 </p>
@@ -94,7 +108,7 @@ export default function ParticipantDetail({
 
               {/* Main row: headshot + name + live stats */}
               <div className="flex items-center justify-between gap-4">
-                {/* Left: headshot + player name */}
+                {/* Left: headshot + player name + round scores */}
                 <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
@@ -106,12 +120,12 @@ export default function ParticipantDetail({
                   />
                   <div className="min-w-0">
                     <p className={`text-base font-semibold leading-tight ${isCut ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                      {emoji && <span className="mr-1">{emoji}</span>}
                       {liveData?.displayName ?? player.displayName}
                       {isCut && (
-                        <span className="ml-2 text-xs font-bold text-red-500 no-underline not-italic">CUT</span>
+                        <span className="ml-2 text-xs font-bold text-red-500">CUT</span>
                       )}
                     </p>
-                    {/* Round scores inline under name */}
                     {roundStats.length > 0 && (
                       <div className="flex items-center gap-2 mt-0.5">
                         {roundStats.map((s) => (
@@ -125,12 +139,12 @@ export default function ParticipantDetail({
                   </div>
                 </div>
 
-                {/* Right: live stats + expand button */}
+                {/* Right: live stats + expand chevron */}
                 <div className="flex items-center gap-3 shrink-0">
                   {isPreTournament ? (
                     <p className="text-sm text-gray-300 tabular-nums">Pre-Tournament</p>
                   ) : liveData ? (
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-4">
                       <div className="text-center">
                         <p className="text-xs text-gray-400 mb-0.5">Pos</p>
                         <p className="text-sm font-semibold text-gray-800 tabular-nums">
@@ -152,17 +166,23 @@ export default function ParticipantDetail({
                         <p className="text-sm font-semibold text-gray-800 tabular-nums">
                           {liveData.state === 'in' && liveData.thru > 0
                             ? liveData.thru
-                            : liveData.state === 'post'
-                            ? 'F'
-                            : '—'}
+                            : liveData.state === 'post' ? 'F' : '—'}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Earnings</p>
+                        <p className="text-xs text-gray-400 mb-0.5">Live $</p>
                         <p className={`text-sm font-semibold tabular-nums ${
                           liveData.projectedEarnings > 0 ? 'text-green-700' : 'text-gray-400'
                         }`}>
                           {liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">EV $</p>
+                        <p className={`text-sm font-semibold tabular-nums ${
+                          liveData.oddsEV > 0 ? 'text-blue-600' : 'text-gray-400'
+                        }`}>
+                          {liveData.oddsEV > 0 ? liveData.oddsEVDisplay : '$0'}
                         </p>
                       </div>
                     </div>
@@ -170,40 +190,51 @@ export default function ParticipantDetail({
                     <p className="text-sm text-gray-300">No data</p>
                   )}
 
-                  {/* Expand button — only shown when stats exist */}
-                  {hasStats && (
-                    <button
-                      onClick={() => toggleTier(tier.id)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label={isExpanded ? 'Hide stats' : 'Show stats'}
+                  {/* Always show expand chevron */}
+                  <button
+                    onClick={() => toggleTier(tier.id)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label={isExpanded ? 'Hide stats' : 'Show stats'}
+                  >
+                    <svg
+                      className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                     >
-                      <svg
-                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  )}
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Expanded stats panel */}
-            {isExpanded && hasStats && otherStats.length > 0 && (
+            {isExpanded && (
               <div className="border-t border-gray-100 px-5 py-3 bg-gray-50 rounded-b-lg">
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-6 gap-y-3">
-                  {otherStats.map((s) => (
-                    <div key={s.name} className="text-center">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">
-                        {STAT_MAP[s.name]}
-                      </p>
-                      <p className="text-sm font-semibold text-gray-700 tabular-nums">
-                        {s.displayValue}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                {otherStats.length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-6 gap-y-3">
+                    {otherStats.map((s) => (
+                      <div key={s.name} className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">
+                          {STAT_MAP[s.name]}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-700 tabular-nums">
+                          {s.displayValue}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-6 gap-y-3">
+                    {PLACEHOLDER_STATS.map((label) => (
+                      <div key={label} className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">
+                          {label}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-300 tabular-nums">—</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

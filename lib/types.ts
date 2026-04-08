@@ -86,6 +86,8 @@ export interface PlayerLiveData {
   state: 'pre' | 'in' | 'post';
   isCut: boolean;
   statistics: Array<{ name: string; displayValue: string }>;
+  oddsEV: number;
+  oddsEVDisplay: string;
 }
 
 export interface PickResult {

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { ParticipantScore, ESPNTournamentStatus } from '@/lib/types';
 import LeaderboardRow from './LeaderboardRow';
+import { computeTierRankings } from '@/lib/utils';
 
 const POOL_BUY_IN = 10;
 
@@ -88,6 +89,8 @@ export default function Leaderboard({
     }
     return map;
   }, [standings, ownershipCount, totalParticipants]);
+
+  const tierRankings = useMemo(() => computeTierRankings(standings), [standings]);
 
   // Augment standings with derived sort values
   const augmented = useMemo(() => standings.map((s) => {
@@ -222,6 +225,7 @@ export default function Leaderboard({
                 colSpan={8}
                 ownershipCount={ownershipCount}
                 totalParticipants={totalParticipants}
+                tierRankings={tierRankings}
               />
             );
           })}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { ParticipantScore, ESPNTournamentStatus } from '@/lib/types';
+import { getTierEmoji, type TierRankMap } from '@/lib/utils';
 
 interface Props {
   s: ParticipantScore;
@@ -18,6 +19,7 @@ interface Props {
   colSpan: number;
   ownershipCount: Map<string, number>;
   totalParticipants: number;
+  tierRankings: TierRankMap;
 }
 
 export default function LeaderboardRow({
@@ -34,6 +36,7 @@ export default function LeaderboardRow({
   colSpan,
   ownershipCount,
   totalParticipants,
+  tierRankings,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
@@ -139,6 +142,8 @@ export default function LeaderboardRow({
                 const name = liveData?.displayName ?? player.displayName;
                 const pickCount = ownershipCount.get(player.id) ?? 0;
                 const pct = ((pickCount / totalParticipants) * 100).toFixed(0);
+                const tierRank = tierRankings.get(`${tier.id}:${player.id}`);
+                const emoji = status.state === 'pre' ? '' : getTierEmoji(tierRank?.rank ?? 99, tierRank?.total ?? 99, isCut);
 
                 return (
                   <div key={tier.id} className={`text-xs ${isCut ? 'opacity-40' : ''}`}>
@@ -159,6 +164,7 @@ export default function LeaderboardRow({
                       />
                       <div>
                         <p className={`font-semibold text-gray-800 truncate ${isCut ? 'line-through' : ''}`}>
+                          {emoji && <span className="mr-1">{emoji}</span>}
                           {name}
                         </p>
                         <p className="text-gray-500">

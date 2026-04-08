@@ -123,6 +123,10 @@ export function computeStandings(
           status.period > 2 &&
           earnings === 0;
 
+        const playerEV = isTournamentComplete
+          ? earnings
+          : (oddsEV?.get(player.espnId) ?? projected);
+
         liveData = {
           espnId: player.espnId,
           displayName: competitor.athlete.displayName,
@@ -136,14 +140,12 @@ export function computeStandings(
           state: competitor.status?.type?.state ?? 'pre',
           isCut,
           statistics: competitor.statistics ?? [],
+          oddsEV: playerEV,
+          oddsEVDisplay: playerEV > 0 ? formatCurrency(playerEV) : '$0',
         };
 
         totalEarnings += projected;
-        // Odds EV: use when available, fall back to position-based
-        const ev = isTournamentComplete
-          ? earnings
-          : (oddsEV?.get(player.espnId) ?? projected);
-        totalOddsEV += ev;
+        totalOddsEV += playerEV;
       }
 
       return { tier, player, liveData };
