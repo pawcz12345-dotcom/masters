@@ -136,10 +136,31 @@ export function computeStandings(
       return { tier, player, liveData };
     });
 
+    // Sum score-to-par across all picks
+    let totalScoreToPar = 0;
+    for (const { liveData } of pickResults) {
+      if (liveData && !liveData.isCut && liveData.state !== 'pre') {
+        const raw = liveData.scoreDisplay;
+        if (raw === 'E') {
+          // even par, add 0
+        } else {
+          const n = parseFloat(raw);
+          if (!isNaN(n)) totalScoreToPar += n;
+        }
+      }
+    }
+
+    const totalScoreDisplay =
+      totalScoreToPar === 0 ? 'E'
+      : totalScoreToPar > 0 ? `+${totalScoreToPar}`
+      : `${totalScoreToPar}`;
+
     return {
       participant,
       totalEarnings,
       totalEarningsDisplay: formatCurrency(totalEarnings),
+      totalScoreToPar,
+      totalScoreDisplay,
       picks: pickResults,
       rank: 0,
       rankDisplay: '',

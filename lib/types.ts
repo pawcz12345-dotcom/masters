@@ -97,6 +97,8 @@ export interface ParticipantScore {
   participant: Participant;
   totalEarnings: number;
   totalEarningsDisplay: string;
+  totalScoreToPar: number;
+  totalScoreDisplay: string;
   picks: PickResult[];
   rank: number;
   rankDisplay: string;

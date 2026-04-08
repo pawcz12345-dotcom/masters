@@ -57,6 +57,7 @@ export default function Leaderboard({
               {cutsLabel}
               <InfoTooltip text="X/10 players projected to make the cut. 10/10 means all your picks are still in the tournament." />
             </th>
+            <th className="pb-3 pr-4 text-right">Score</th>
             <th className="pb-3 pr-4 text-right">{purseLabel}</th>
             <th className="pb-3 text-right">{payoutLabel}</th>
           </tr>
@@ -94,6 +95,15 @@ export default function Leaderboard({
                 </td>
                 <td className={`py-4 pr-4 text-center font-medium tabular-nums ${cutsColor}`}>
                   {alive}/{total}
+                </td>
+                <td className="py-4 pr-4 text-right font-medium tabular-nums">
+                  {status.state === 'pre' ? (
+                    <span className="text-gray-300">—</span>
+                  ) : (
+                    <span className={s.totalScoreToPar < 0 ? 'text-red-600' : s.totalScoreToPar > 0 ? 'text-gray-500' : 'text-gray-700'}>
+                      {s.totalScoreDisplay}
+                    </span>
+                  )}
                 </td>
                 <td className="py-4 pr-4 text-right font-medium tabular-nums">
                   {s.totalEarnings > 0 ? (
