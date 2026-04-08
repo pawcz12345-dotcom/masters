@@ -12,7 +12,9 @@ const tooltipStyle: React.CSSProperties = {
   letterSpacing: 'normal',
   textAlign: 'left',
   lineHeight: '1.5',
-  width: '360px',
+  width: 'max-content',
+  maxWidth: '480px',
+  whiteSpace: 'normal',
 };
 
 function InfoTooltip({ text }: { text: string }) {
