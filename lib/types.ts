@@ -27,6 +27,25 @@ export interface Participant {
   picks: Pick[];
 }
 
+export interface RoundSnapshot {
+  saved: boolean;
+  round: number;          // 0=pre, 1=R1, 2=R2, 3=R3, 4=R4
+  savedAt?: string;
+  status?: ESPNTournamentStatus;
+  competitors?: ESPNCompetitor[];
+}
+
+export interface RoundData {
+  round: number;
+  label: string;
+  savedAt?: string;
+  status: ESPNTournamentStatus;
+  standings: ParticipantScore[];
+  competitors: ESPNCompetitor[];
+  evRecord: Record<string, number>;
+  cutProbRecord: Record<string, number>;
+}
+
 export interface PurseEntry {
   position: number;
   amount: number;

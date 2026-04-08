@@ -3,16 +3,28 @@ name: Revalidate Golf Pool Cache
 on:
   schedule:
     # Every 15 minutes during Masters week (Apr 9-13, 2026)
-    # Tournament hours approx 11am-8pm ET = 15:00-00:00 UTC
     - cron: '*/15 15-23 9-13 4 *'
     - cron: '*/15 0 10-14 4 *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   revalidate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed to commit snapshots
     steps:
-      - name: Trigger cache revalidation
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Save round snapshot if needed
+        run: node scripts/save-snapshot.mjs
+
+      - name: Trigger Vercel cache revalidation
         run: |
           curl -s -o /dev/null -w "%{http_code}" -X POST \
             -H "x-revalidate-token: ${{ secrets.REVALIDATE_SECRET }}" \
