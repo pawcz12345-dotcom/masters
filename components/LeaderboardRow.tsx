@@ -55,12 +55,10 @@ export default function LeaderboardRow({
         {/* Rank */}
         <td className="py-4 pr-4 sm:pr-6 pl-4 sm:pl-0">
           <span className={`font-bold tabular-nums text-sm ${
-            s.totalEarnings === 0
-              ? 'text-masters-ink-3 dark:text-masters-d-ink-3'
-              : s.rank === 1 ? 'text-masters-gold dark:text-masters-d-gold'
-              : s.rank === 2 ? 'text-slate-400 dark:text-slate-300'
-              : s.rank === 3 ? 'text-amber-700 dark:text-amber-500'
-              : 'text-masters-ink-3 dark:text-masters-d-ink-3'
+            s.rank === 1 ? 'text-masters-gold dark:text-masters-d-gold'
+            : s.rank === 2 ? 'text-slate-400 dark:text-slate-300'
+            : s.rank === 3 ? 'text-amber-700 dark:text-amber-500'
+            : 'text-masters-ink-3 dark:text-masters-d-ink-3'
           }`}>
             {s.rankDisplay}
           </span>
@@ -82,32 +80,20 @@ export default function LeaderboardRow({
               </svg>
             </span>
           </div>
-          {/* Mobile-only secondary stats row */}
-          {status.state !== 'pre' && (
-            <div className="flex items-center gap-2 mt-0.5 md:hidden text-xs">
-              <span className={cutsColor}>{alive}/{total}</span>
-              <span className="text-masters-ink-4 dark:text-masters-d-ink-4">·</span>
-              <span className={
-                s.totalScoreToPar < 0 ? 'text-masters-red dark:text-masters-d-red' :
-                s.totalScoreToPar > 0 ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
-                'text-masters-ink dark:text-masters-d-ink'
-              }>{s.totalScoreDisplay}</span>
-            </div>
-          )}
         </td>
 
         {/* Cuts */}
-        <td className={`py-4 pr-4 sm:pr-6 text-center font-medium tabular-nums text-sm hidden md:table-cell ${cutsColor}`}>
+        <td className={`py-4 pr-4 sm:pr-6 text-center font-medium tabular-nums text-sm ${cutsColor}`}>
           {alive}/{total}
         </td>
 
         {/* Ownership */}
-        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm text-masters-ink-2 dark:text-masters-d-ink-2 hidden md:table-cell">
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm text-masters-ink-2 dark:text-masters-d-ink-2">
           {ownershipDisplay}
         </td>
 
         {/* Score */}
-        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm hidden md:table-cell">
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm">
           {status.state === 'pre' ? (
             <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
           ) : (
@@ -122,7 +108,7 @@ export default function LeaderboardRow({
         </td>
 
         {/* EV Purse — gold, no blue */}
-        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm hidden md:table-cell">
+        <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm">
           {s.oddsEV > 0 ? (
             <span className="text-masters-gold dark:text-masters-d-gold">{s.oddsEVDisplay}</span>
           ) : (

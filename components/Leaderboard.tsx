@@ -26,15 +26,12 @@ function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="relative inline-block group align-middle ml-1">
       <span
-        tabIndex={0}
-        role="note"
-        aria-label={text}
-        className="cursor-help text-masters-ink-4 dark:text-masters-d-ink-4 hover:text-masters-ink-2 dark:hover:text-masters-d-ink-2 focus:text-masters-ink-2 dark:focus:text-masters-d-ink-2 text-[10px] font-bold border border-masters-border dark:border-masters-d-border rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-masters-green dark:focus-visible:ring-masters-d-green"
+        className="cursor-help text-masters-ink-4 dark:text-masters-d-ink-4 hover:text-masters-ink-2 dark:hover:text-masters-d-ink-2 text-[10px] font-bold border border-masters-border dark:border-masters-d-border rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none transition-colors"
       >
         i
       </span>
       <span
-        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50 shadow-2xl"
+        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-2xl"
         style={tooltipStyle}
       >
         {text}
@@ -136,15 +133,15 @@ export default function Leaderboard({ standings, status }: {
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table className="w-full text-sm min-w-[480px]">
+      <table className="w-full text-sm min-w-[780px]">
         <thead>
           <tr className="border-b border-masters-border dark:border-masters-d-border text-left">
             {th('rank', 'Rank', 'w-12 pl-4 sm:pl-0')}
             <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3`}>Participant</th>
-            {th('cuts', <>{cutsLabel}<InfoTooltip text="How many of your 10 players made (or are projected to make) the cut. More is better." /></>, 'text-center hidden md:table-cell')}
-            {th('ownership', <>Ownership<InfoTooltip text="How popular your picks are. Lower = more contrarian, which pays off more if those players outperform." /></>, 'text-right hidden md:table-cell')}
-            {th('score', <>Score<InfoTooltip text="Combined score vs par for all 10 picks. Red = under par (good)." /></>, 'text-right hidden md:table-cell')}
-            {th('evPurse', <>EV Purse<InfoTooltip text="Expected prize earnings based on betting odds — a forecast of how your picks will finish." /></>, 'text-right hidden md:table-cell')}
+            {th('cuts', <>{cutsLabel}<InfoTooltip text="How many of your 10 players made (or are projected to make) the cut. More is better." /></>, 'text-center')}
+            {th('ownership', <>Ownership<InfoTooltip text="How popular your picks are. Lower = more contrarian, which pays off more if those players outperform." /></>, 'text-right')}
+            {th('score', <>Score<InfoTooltip text="Combined score vs par for all 10 picks. Red = under par (good)." /></>, 'text-right')}
+            {th('evPurse', <>EV Purse<InfoTooltip text="Expected prize earnings based on betting odds — a forecast of how your picks will finish." /></>, 'text-right')}
             {th('livePurse', <>Live Purse<InfoTooltip text="What your picks would earn if the tournament ended right now. This determines your rank." /></>, 'text-right')}
             {th('payout', <>{payoutLabel}<InfoTooltip text={`What you'd win right now. The $${totalPot} pot goes to 1st place — split if tied.`} /></>, 'text-right')}
           </tr>
