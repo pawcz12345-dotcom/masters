@@ -31,30 +31,74 @@ function computeProjectedEarnings(
     return projected;
   }
 
-  // Pre or in-progress — project based on current sortOrder position
-  // Group competitors by sortOrder (ties share same sortOrder)
-  const byPosition = new Map<number, ESPNCompetitor[]>();
-  for (const c of competitors) {
-    const pos = c.sortOrder ?? 999;
-    if (!byPosition.has(pos)) byPosition.set(pos, []);
-    byPosition.get(pos)!.push(c);
-  }
-
   const purseMap = new Map<number, number>(
     pursePayouts.map((p) => [p.position, p.amount])
   );
 
-  // For each position group, average the payouts across tied positions
-  for (const [pos, group] of byPosition.entries()) {
+  // Group by score-to-par so players with the same score always share the same
+  // purse split regardless of whether ESPN assigns them identical sortOrders.
+  // Players who haven't teed off yet (state === 'pre') keep their sortOrder-based
+  // position so they don't incorrectly merge into the "E" group.
+  function getScoreInt(c: ESPNCompetitor): number | null {
+    if ((c.status?.type?.state ?? 'pre') === 'pre') return null;
+    const stat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
+    const raw = (stat && stat !== '-') ? stat : (c.score?.displayValue ?? 'E');
+    if (!raw || raw === '-' || raw === 'E') return 0;
+    const n = parseFloat(raw);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // Separate players into "scored" (teed off) and "not started"
+  const scoredPlayers: ESPNCompetitor[] = [];
+  const notStarted: ESPNCompetitor[] = [];
+  for (const c of competitors) {
+    if (getScoreInt(c) === null) notStarted.push(c);
+    else scoredPlayers.push(c);
+  }
+
+  // Group scored players by score-to-par
+  const byScore = new Map<number, ESPNCompetitor[]>();
+  for (const c of scoredPlayers) {
+    const score = getScoreInt(c)!;
+    if (!byScore.has(score)) byScore.set(score, []);
+    byScore.get(score)!.push(c);
+  }
+
+  // Sort groups best-to-worst, assign purse positions sequentially
+  const sortedGroups = Array.from(byScore.entries()).sort((a, b) => a[0] - b[0]);
+  let position = 1;
+  for (const [, group] of sortedGroups) {
     const count = group.length;
     let totalPayout = 0;
     for (let i = 0; i < count; i++) {
-      totalPayout += purseMap.get(pos + i) ?? 0;
+      totalPayout += purseMap.get(position + i) ?? 0;
     }
     const splitAmount = totalPayout / count;
     for (const c of group) {
       projected.set(c.athlete.id, splitAmount);
     }
+    position += count;
+  }
+
+  // Not-started players fall into remaining positions using their sortOrder
+  const notStartedSorted = [...notStarted].sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
+  const byNotStartedPos = new Map<number, ESPNCompetitor[]>();
+  for (const c of notStartedSorted) {
+    const pos = c.sortOrder ?? 999;
+    if (!byNotStartedPos.has(pos)) byNotStartedPos.set(pos, []);
+    byNotStartedPos.get(pos)!.push(c);
+  }
+  for (const [, group] of [...byNotStartedPos.entries()].sort((a, b) => a[0] - b[0])) {
+    const count = group.length;
+    let totalPayout = 0;
+    for (let i = 0; i < count; i++) {
+      totalPayout += purseMap.get(position + i) ?? 0;
+    }
+    const splitAmount = totalPayout / count;
+    for (const c of group) {
+      projected.set(c.athlete.id, splitAmount);
+    }
+    position += count;
   }
 
   return projected;
