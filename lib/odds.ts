@@ -158,7 +158,7 @@ export async function fetchOddsEV(
 
   try {
     const url = `${ODDS_API_URL}?apiKey=${apiKey}&regions=us&markets=outrights&oddsFormat=american`;
-    const res = await fetch(url, { next: { revalidate: 7200 } });
+    const res = await fetch(url, { next: { revalidate: 300 } });
 
     if (!res.ok) {
       console.warn(`Odds API returned ${res.status}`);
