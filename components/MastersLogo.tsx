@@ -1,76 +1,72 @@
-// Faithful reproduction of the Masters Tournament / Augusta National logo:
-// yellow US map outline on Augusta green, red flagstick in Georgia, italic serif text.
+// Reproduction of the Masters Tournament logo:
+// Yellow US map, red flag in Georgia, dark green italic serif "MASTERS" text.
+// No circle — transparent background, wider-than-tall aspect ratio.
 
 const US_PATH =
   // NW Washington, east along northern border
-  'M 10,22 L 18,20 L 28,18 L 37,18 ' +
-  // Great Lakes notch (MN → Lake Superior bump → Upper Michigan)
-  'L 41,17 L 44,16 L 47,18 L 49,16 L 51,18 L 53,17 ' +
+  'M 2,18 L 11,15 L 23,13 L 34,13 ' +
+  // Great Lakes notch (MN → Lake Superior bump → Upper Michigan peninsula)
+  'L 39,12 L 42,11 L 46,13 L 48,11 L 50,13 L 53,12 ' +
   // New England / Maine
-  'L 60,17 L 66,16 ' +
-  // Cape Cod, East Coast south
-  'L 67,22 L 65,23 L 63,26 L 62,28 L 62,30 L 61,32 L 59,34 L 57,36 ' +
+  'L 62,11 L 69,10 ' +
+  // Cape Cod bump, East Coast heading south
+  'L 71,16 L 69,17 L 67,20 L 67,23 L 65,26 L 64,29 L 62,31 ' +
   // Florida peninsula
-  'L 58,39 L 57,44 L 55,50 L 53,46 L 50,38 ' +
+  'L 59,33 L 61,38 L 60,44 L 57,50 L 54,46 L 51,34 ' +
   // Gulf Coast, Mississippi delta
-  'L 47,40 L 43,43 L 39,43 ' +
+  'L 47,35 L 43,38 L 38,38 ' +
   // Texas
-  'L 35,43 L 30,45 L 27,49 L 24,46 ' +
-  // Southwest, California coast
-  'L 21,43 L 18,41 L 14,41 L 11,40 L 9,37 L 8,29 L 8,25 ' +
+  'L 33,38 L 28,41 L 24,47 L 21,44 ' +
+  // Southwest states, California coast heading north
+  'L 18,41 L 14,38 L 10,37 L 7,32 L 5,23 L 5,16 ' +
   // Washington coast back to start
-  'L 9,22 Z';
+  'L 6,14 Z';
 
-export function MastersLogoMark({ size = 40 }: { size?: number }) {
+export function MastersLogoMark({ size = 52 }: { size?: number }) {
+  // Natural aspect ratio: 105 wide × 65 tall
+  const height = size;
+  const width = Math.round(size * 105 / 65);
+
   return (
     <svg
-      width={size}
-      height={size}
-      viewBox="0 0 80 80"
+      width={width}
+      height={height}
+      viewBox="0 0 105 65"
       fill="none"
       aria-label="The Masters Tournament"
     >
-      {/* Augusta green background */}
-      <circle cx="40" cy="40" r="39" fill="#004F38" />
-
-      {/* US map — depth shadow */}
-      <path d={US_PATH} fill="#003A2A" transform="translate(0.7,0.9)" />
+      {/* US map depth shadow */}
+      <path d={US_PATH} fill="#B8900A" transform="translate(0.8,1.2)" opacity="0.45" />
 
       {/* US map — gold fill */}
       <path d={US_PATH} fill="#F0BE18" />
 
-      {/* Flagstick in Georgia (SE quadrant of map) */}
-      <line
-        x1="58.5" y1="35"
-        x2="58.5" y2="23"
-        stroke="white"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
+      {/* Flagstick in Georgia */}
+      <line x1="63" y1="31" x2="63" y2="19" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
 
-      {/* Flag — red, pointing right off the stick */}
-      <path d="M 58.5,23 L 64,25.5 L 58.5,28 Z" fill="#C41E1E" />
+      {/* Flag — red */}
+      <path d="M 63,19 L 70,22 L 63,25 Z" fill="#C41E1E" />
 
-      {/* "THE" — small italic gold */}
+      {/* "THE" — tiny, dark green, spaced */}
       <text
-        x="40" y="61"
+        x="52" y="55"
         textAnchor="middle"
-        fill="#F0BE18"
-        fontSize="6"
-        fontFamily="'Libre Franklin', 'BentonSans', Arial, Helvetica, sans-serif"
-        fontStyle="normal"
-        letterSpacing="2.5"
+        fill="#1c4932"
+        fontSize="5.5"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        letterSpacing="2"
       >THE</text>
 
-      {/* "MASTERS" — larger italic white */}
+      {/* "MASTERS" — large italic green serif, matching the real wordmark */}
       <text
-        x="40" y="72"
+        x="52" y="64"
         textAnchor="middle"
-        fill="white"
-        fontSize="9.5"
-        fontFamily="'Libre Franklin', 'BentonSans', Arial, Helvetica, sans-serif"
-        fontStyle="normal"
-        letterSpacing="1"
+        fill="#006747"
+        fontSize="14"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        fontStyle="italic"
+        fontWeight="600"
+        letterSpacing="0.5"
       >MASTERS</text>
     </svg>
   );
