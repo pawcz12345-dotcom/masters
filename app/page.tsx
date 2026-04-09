@@ -88,7 +88,7 @@ export default async function Home() {
             <MastersLogoMark size={52} />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-masters-ink dark:text-masters-d-ink tracking-tight leading-tight">
-                Masters 2026 Pool
+                Amen Corner
               </h1>
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                 {espn.status.state !== 'pre' && <TournamentStatus status={espn.status} />}
