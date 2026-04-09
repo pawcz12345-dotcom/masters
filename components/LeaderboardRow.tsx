@@ -14,6 +14,7 @@ interface Props {
   cutsColor: string;
   alive: number;
   total: number;
+  holesPlayed: number;
   ownershipDisplay: string;
   status: ESPNTournamentStatus;
   colSpan: number;
@@ -24,7 +25,7 @@ interface Props {
 
 export default function LeaderboardRow({
   s, index, projectedPayout, isTop3, isLeading,
-  cutsColor, alive, total, ownershipDisplay,
+  cutsColor, alive, total, holesPlayed, ownershipDisplay,
   status, colSpan, ownershipCount, totalParticipants, tierRankings,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -112,14 +113,7 @@ export default function LeaderboardRow({
           {status.state === 'pre' ? (
             <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
           ) : (
-            (() => {
-              const holesPlayed = s.picks.reduce((sum, { liveData }) => {
-                if (!liveData || liveData.isCut) return sum;
-                if (liveData.state === 'post') return sum + 18;
-                return sum + (liveData.thru ?? 0);
-              }, 0);
-              return <span className="font-medium">{holesPlayed}</span>;
-            })()
+            <span className="font-medium">{holesPlayed}</span>
           )}
         </td>
 

@@ -51,7 +51,7 @@ function InfoTooltip({ text, align = 'center' }: { text: string; align?: 'center
   );
 }
 
-type SortKey = 'rank' | 'cuts' | 'ownership' | 'score' | 'evPurse' | 'livePurse' | 'payout';
+type SortKey = 'rank' | 'cuts' | 'ownership' | 'score' | 'holesPlayed' | 'evPurse' | 'livePurse' | 'payout';
 
 function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   return (
@@ -101,6 +101,11 @@ export default function Leaderboard({ standings, status }: {
     s,
     alive: s.picks.filter((p) => !p.liveData?.isCut).length,
     ownership: ownershipByParticipant.get(s.participant.id) ?? 0,
+    holesPlayed: s.picks.reduce((sum, { liveData }) => {
+      if (!liveData || liveData.isCut) return sum;
+      if (liveData.state === 'post') return sum + 18;
+      return sum + (liveData.thru ?? 0);
+    }, 0),
   })), [standings, ownershipByParticipant]);
 
   const sorted = useMemo(() => {
@@ -108,13 +113,14 @@ export default function Leaderboard({ standings, status }: {
     copy.sort((a, b) => {
       let diff = 0;
       switch (sortKey) {
-        case 'rank':      diff = a.s.rank - b.s.rank; break;
-        case 'cuts':      diff = b.alive - a.alive; break;
-        case 'ownership': diff = b.ownership - a.ownership; break;
-        case 'score':     diff = a.s.totalScoreToPar - b.s.totalScoreToPar; break;
-        case 'evPurse':   diff = b.s.oddsEV - a.s.oddsEV; break;
-        case 'livePurse': diff = b.s.totalEarnings - a.s.totalEarnings; break;
-        case 'payout':    diff = a.s.rank - b.s.rank; break;
+        case 'rank':        diff = a.s.rank - b.s.rank; break;
+        case 'cuts':        diff = b.alive - a.alive; break;
+        case 'ownership':   diff = b.ownership - a.ownership; break;
+        case 'score':       diff = a.s.totalScoreToPar - b.s.totalScoreToPar; break;
+        case 'holesPlayed': diff = b.holesPlayed - a.holesPlayed; break;
+        case 'evPurse':     diff = b.s.oddsEV - a.s.oddsEV; break;
+        case 'livePurse':   diff = b.s.totalEarnings - a.s.totalEarnings; break;
+        case 'payout':      diff = a.s.rank - b.s.rank; break;
       }
       if (diff === 0) diff = b.s.oddsEV - a.s.oddsEV;
       return sortDir === 'asc' ? diff : -diff;
@@ -152,14 +158,14 @@ export default function Leaderboard({ standings, status }: {
             {th('cuts', <>{cutsLabel}<InfoTooltip text="How many of your 10 players made (or are projected to make) the cut. More is better." /></>, 'text-center')}
             {th('ownership', <>Ownership<InfoTooltip text="How popular your picks are. Lower = more contrarian, which pays off more if those players outperform." /></>, 'text-right')}
             {th('score', <>Score<InfoTooltip text="Combined score vs par for all 10 picks. Red = under par (good)." /></>, 'text-right')}
-            <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right`}>Holes</th>
+            {th('holesPlayed', 'Holes Played', 'text-right')}
             {th('evPurse', <>EV Purse<InfoTooltip text="Expected prize earnings based on betting odds — a forecast of how your picks will finish." /></>, 'text-right')}
             {th('livePurse', <>Live Purse<InfoTooltip text="What your picks would earn if the tournament ended right now. This determines your rank." align="right" /></>, 'text-right')}
             {th('payout', <>{payoutLabel}<InfoTooltip text={`What you'd win right now. The $${totalPot} pot goes to 1st place — split if tied.`} align="right" /></>, 'text-right')}
           </tr>
         </thead>
         <tbody>
-          {sorted.map(({ s, alive }, i) => {
+          {sorted.map(({ s, alive, holesPlayed }, i) => {
             const isTop3 = s.rank <= 3 && s.totalEarnings > 0;
             const isLeading = s.rank === 1;
             const total = s.picks.length;
@@ -179,6 +185,7 @@ export default function Leaderboard({ standings, status }: {
                 isTop3={isTop3} isLeading={isLeading}
                 cutsColor={cutsColor}
                 alive={alive} total={total}
+                holesPlayed={holesPlayed}
                 ownershipDisplay={ownershipDisplay}
                 status={status} colSpan={999}
                 ownershipCount={ownershipCount}
