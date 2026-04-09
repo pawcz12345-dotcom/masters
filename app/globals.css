@@ -23,19 +23,19 @@
   --color-masters-red:      #B8281E;
 
   /* ── Dark mode ──────────────────────────────────────── */
-  --color-masters-d-bg:     #091610;
-  --color-masters-d-card:   #0D2219;
-  --color-masters-d-hover:  #142C1F;
-  --color-masters-d-border: #1A3D2A;
-  --color-masters-d-ink:    #E5F0E9;
-  --color-masters-d-ink-2:  #72A885;
-  --color-masters-d-ink-3:  #3A6250;
-  --color-masters-d-ink-4:  #1A3020;
-  --color-masters-d-green:  #00C070;
-  --color-masters-d-green-2:#009A58;
-  --color-masters-d-gold:   #EDB820;
-  --color-masters-d-gold-2: #C49A00;
-  --color-masters-d-red:    #FF6060;
+  --color-masters-d-bg:     #080F0A;
+  --color-masters-d-card:   #0F2418;
+  --color-masters-d-hover:  #17301F;
+  --color-masters-d-border: #244D33;
+  --color-masters-d-ink:    #EEF6F0;
+  --color-masters-d-ink-2:  #92C4A5;
+  --color-masters-d-ink-3:  #6A9E7C;
+  --color-masters-d-ink-4:  #3A6A50;
+  --color-masters-d-green:  #34D984;
+  --color-masters-d-green-2:#1AAD60;
+  --color-masters-d-gold:   #F0C030;
+  --color-masters-d-gold-2: #C8A000;
+  --color-masters-d-red:    #FF7070;
 }
 
 body {
