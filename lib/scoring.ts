@@ -190,6 +190,7 @@ export function computeStandings(
           thru: competitor.status?.thru ?? 0,
           state: competitor.status?.type?.state ?? 'pre',
           isCut,
+          sortOrder: competitor.sortOrder ?? 999,
           statistics: competitor.statistics ?? [],
           oddsEV: playerEV,
           oddsEVDisplay: playerEV > 0 ? formatCurrency(playerEV) : '$0',

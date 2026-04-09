@@ -110,6 +110,7 @@ export interface PlayerLiveData {
   startHole: number;
   state: 'pre' | 'in' | 'post';
   isCut: boolean;
+  sortOrder: number;
   statistics: Array<{ name: string; displayValue: string }>;
   oddsEV: number;
   oddsEVDisplay: string;

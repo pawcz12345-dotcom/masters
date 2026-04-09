@@ -99,14 +99,20 @@ export default function Leaderboard({ standings, status }: {
 
   const augmented = useMemo(() => standings.map((s) => ({
     s,
-    alive: s.picks.filter((p) => !p.liveData?.isCut).length,
+    alive: s.picks.filter((p) => {
+      if (!p.liveData) return false;
+      if (p.liveData.isCut) return false;
+      // Before the official cut, only count players currently inside the cut line (top 50)
+      if (!cutDay && p.liveData.state !== 'pre') return (p.liveData.sortOrder ?? 999) <= 50;
+      return true;
+    }).length,
     ownership: ownershipByParticipant.get(s.participant.id) ?? 0,
     holesPlayed: s.picks.reduce((sum, { liveData }) => {
       if (!liveData || liveData.isCut) return sum;
       if (liveData.state === 'post') return sum + 18;
       return sum + (liveData.thru ?? 0);
     }, 0),
-  })), [standings, ownershipByParticipant]);
+  })), [standings, ownershipByParticipant, cutDay]);
 
   const sorted = useMemo(() => {
     const copy = [...augmented];
