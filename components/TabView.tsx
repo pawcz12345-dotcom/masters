@@ -14,7 +14,6 @@ const CONTENT_TABS: { id: ContentTab; label: string }[] = [
 ];
 
 const ALL_ROUNDS = [
-  { round: 0, label: 'Pre-Tournament' },
   { round: 1, label: 'R1' },
   { round: 2, label: 'R2' },
   { round: 3, label: 'R3' },
@@ -34,7 +33,6 @@ export default function TabView({
   const isPreTournament = currentStatus.state === 'pre';
 
   const availableRounds = new Set<number>([
-    0,
     ...snapshotRounds.map((r) => r.round),
     ...(isPreTournament ? [] : [99]),
   ]);
@@ -43,11 +41,13 @@ export default function TabView({
   const router = useRouter();
   const pathname = usePathname();
 
+  const defaultRound = isPreTournament ? (snapshotRounds[0]?.round ?? 99) : 99;
+
   function parseRoundParam(): number {
     const raw = searchParams.get('round');
-    if (raw === null) return isPreTournament ? 0 : 99;
+    if (raw === null) return defaultRound;
     const n = parseInt(raw, 10);
-    return availableRounds.has(n) ? n : (isPreTournament ? 0 : 99);
+    return availableRounds.has(n) ? n : defaultRound;
   }
 
   function parseTabParam(): ContentTab {
