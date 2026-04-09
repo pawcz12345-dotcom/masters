@@ -126,6 +126,12 @@ export function computeStandings(
           ? earnings
           : (oddsResult?.ev.get(player.espnId) ?? projected);
 
+        // scoreToPar stat is the reliable to-par string ("-3", "E", "+1").
+        // score.displayValue is unreliable: "-" for not-yet-started, wrong for active players.
+        const scoreToParStat = competitor.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
+        const rawScore = scoreToParStat && scoreToParStat !== '-' ? scoreToParStat : (competitor.score?.displayValue ?? 'E');
+        const scoreDisplay = rawScore === '-' ? 'E' : rawScore;
+
         liveData = {
           espnId: player.espnId,
           displayName: competitor.athlete.displayName,
@@ -133,7 +139,7 @@ export function computeStandings(
           projectedEarnings: projected,
           earningsDisplay: earnings > 0 ? formatCurrency(earnings) : '$0',
           projectedEarningsDisplay: projected > 0 ? formatCurrency(projected) : '$0',
-          scoreDisplay: competitor.score?.displayValue ?? 'E',
+          scoreDisplay,
           position: isCut ? 'CUT' : (competitor.status?.position?.displayName ?? '-'),
           thru: competitor.status?.thru ?? 0,
           state: competitor.status?.type?.state ?? 'pre',
