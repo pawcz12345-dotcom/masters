@@ -4,7 +4,7 @@
 @variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-libre-franklin);
 
   /* ── Light mode ─────────────────────────────────────── */
   --color-masters-bg:       #F5F0E8;
