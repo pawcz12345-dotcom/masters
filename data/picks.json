@@ -1,25 +1,6 @@
 {
   "participants": [
     {
-      "id": "participant-ace",
-      "slug": "ace",
-      "name": "Ace",
-      "teamName": "Ace",
-      "tiebreaker": "-12",
-      "picks": [
-        { "tierId": "tier-1", "playerId": "jon-rahm" },
-        { "tierId": "tier-2", "playerId": "justin-rose" },
-        { "tierId": "tier-3", "playerId": "min-woo-lee" },
-        { "tierId": "tier-4", "playerId": "jake-knapp" },
-        { "tierId": "tier-5", "playerId": "sungjae-im" },
-        { "tierId": "tier-6", "playerId": "marco-penge" },
-        { "tierId": "tier-7", "playerId": "sam-stevens" },
-        { "tierId": "tier-8", "playerId": "kristoffer-reitan" },
-        { "tierId": "tier-9", "playerId": "sami-valimaki" },
-        { "tierId": "tier-10", "playerId": "mason-howell" }
-      ]
-    },
-    {
       "id": "participant-sam-colban",
       "slug": "sam-colban",
       "name": "Sam Colban",
@@ -35,25 +16,6 @@
         { "tierId": "tier-7", "playerId": "carlos-ortiz" },
         { "tierId": "tier-8", "playerId": "aldrich-potgieter" },
         { "tierId": "tier-9", "playerId": "charl-schwartzel" },
-        { "tierId": "tier-10", "playerId": "angel-cabrera" }
-      ]
-    },
-    {
-      "id": "participant-erik-vigen",
-      "slug": "erik-vigen",
-      "name": "Erik Vigen",
-      "teamName": "I <3 Matt Fitzpatrick",
-      "tiebreaker": "-10",
-      "picks": [
-        { "tierId": "tier-1", "playerId": "bryson-dechambeau" },
-        { "tierId": "tier-2", "playerId": "justin-rose" },
-        { "tierId": "tier-3", "playerId": "viktor-hovland" },
-        { "tierId": "tier-4", "playerId": "corey-conners" },
-        { "tierId": "tier-5", "playerId": "sungjae-im" },
-        { "tierId": "tier-6", "playerId": "keegan-bradley" },
-        { "tierId": "tier-7", "playerId": "sam-stevens" },
-        { "tierId": "tier-8", "playerId": "john-keefer" },
-        { "tierId": "tier-9", "playerId": "sami-valimaki" },
         { "tierId": "tier-10", "playerId": "angel-cabrera" }
       ]
     },
@@ -207,6 +169,139 @@
         { "tierId": "tier-8", "playerId": "michael-kim" },
         { "tierId": "tier-9", "playerId": "bubba-watson" },
         { "tierId": "tier-10", "playerId": "fred-couples" }
+      ]
+    },
+    {
+      "id": "participant-dennis",
+      "slug": "dennis",
+      "name": "Dennis",
+      "teamName": "¯\\_(ツ)_/¯",
+      "tiebreaker": "-12",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "scottie-scheffler" },
+        { "tierId": "tier-2", "playerId": "brooks-koepka" },
+        { "tierId": "tier-3", "playerId": "patrick-cantlay" },
+        { "tierId": "tier-4", "playerId": "sam-burns" },
+        { "tierId": "tier-5", "playerId": "harris-english" },
+        { "tierId": "tier-6", "playerId": "keegan-bradley" },
+        { "tierId": "tier-7", "playerId": "max-greyserman" },
+        { "tierId": "tier-8", "playerId": "andrew-novak" },
+        { "tierId": "tier-9", "playerId": "sami-valimaki" },
+        { "tierId": "tier-10", "playerId": "fred-couples" }
+      ]
+    },
+    {
+      "id": "participant-tyson",
+      "slug": "tyson",
+      "name": "Tyson",
+      "teamName": "Rory's a bitch",
+      "tiebreaker": "-9",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "jon-rahm" },
+        { "tierId": "tier-2", "playerId": "justin-rose" },
+        { "tierId": "tier-3", "playerId": "akshay-bhatia" },
+        { "tierId": "tier-4", "playerId": "jj-spaun" },
+        { "tierId": "tier-5", "playerId": "gary-woodland" },
+        { "tierId": "tier-6", "playerId": "rasmus-hojgaard" },
+        { "tierId": "tier-7", "playerId": "carlos-ortiz" },
+        { "tierId": "tier-8", "playerId": "aldrich-potgieter" },
+        { "tierId": "tier-9", "playerId": "charl-schwartzel" },
+        { "tierId": "tier-10", "playerId": "fred-couples" }
+      ]
+    },
+    {
+      "id": "participant-nic",
+      "slug": "nic",
+      "name": "Nic",
+      "teamName": "Bean Machine",
+      "tiebreaker": "-13",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "jon-rahm" },
+        { "tierId": "tier-2", "playerId": "hideki-matsuyama" },
+        { "tierId": "tier-3", "playerId": "tyrrell-hatton" },
+        { "tierId": "tier-4", "playerId": "jake-knapp" },
+        { "tierId": "tier-5", "playerId": "max-homa" },
+        { "tierId": "tier-6", "playerId": "nick-taylor" },
+        { "tierId": "tier-7", "playerId": "sam-stevens" },
+        { "tierId": "tier-8", "playerId": "tom-mckibbin" },
+        { "tierId": "tier-9", "playerId": "bubba-watson" },
+        { "tierId": "tier-10", "playerId": "vijay-singh" }
+      ]
+    },
+    {
+      "id": "participant-erik-vigen",
+      "slug": "erik-vigen",
+      "name": "Erik Vigen",
+      "teamName": "Free Tiger",
+      "tiebreaker": "-10",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "jon-rahm" },
+        { "tierId": "tier-2", "playerId": "justin-rose" },
+        { "tierId": "tier-3", "playerId": "viktor-hovland" },
+        { "tierId": "tier-4", "playerId": "shane-lowry" },
+        { "tierId": "tier-5", "playerId": "gary-woodland" },
+        { "tierId": "tier-6", "playerId": "keegan-bradley" },
+        { "tierId": "tier-7", "playerId": "sam-stevens" },
+        { "tierId": "tier-8", "playerId": "nicolas-echavarria" },
+        { "tierId": "tier-9", "playerId": "sami-valimaki" },
+        { "tierId": "tier-10", "playerId": "fred-couples" }
+      ]
+    },
+    {
+      "id": "participant-liam-darbellay",
+      "slug": "liam-darbellay",
+      "name": "Liam Darbellay",
+      "teamName": "Tiger's Drivers License (MC)",
+      "tiebreaker": "-13",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "ludvig-aberg" },
+        { "tierId": "tier-2", "playerId": "collin-morikawa" },
+        { "tierId": "tier-3", "playerId": "akshay-bhatia" },
+        { "tierId": "tier-4", "playerId": "jason-day" },
+        { "tierId": "tier-5", "playerId": "ben-griffin" },
+        { "tierId": "tier-6", "playerId": "aaron-rai" },
+        { "tierId": "tier-7", "playerId": "ryan-fox" },
+        { "tierId": "tier-8", "playerId": "andrew-novak" },
+        { "tierId": "tier-9", "playerId": "danny-willett" },
+        { "tierId": "tier-10", "playerId": "naoyuki-kataoka" }
+      ]
+    },
+    {
+      "id": "participant-jocelyn",
+      "slug": "jocelyn",
+      "name": "Jocelyn",
+      "teamName": "Birdie Babes",
+      "tiebreaker": "-12",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "jon-rahm" },
+        { "tierId": "tier-2", "playerId": "justin-rose" },
+        { "tierId": "tier-3", "playerId": "viktor-hovland" },
+        { "tierId": "tier-4", "playerId": "jj-spaun" },
+        { "tierId": "tier-5", "playerId": "ben-griffin" },
+        { "tierId": "tier-6", "playerId": "alexander-noren" },
+        { "tierId": "tier-7", "playerId": "sam-stevens" },
+        { "tierId": "tier-8", "playerId": "nicolas-echavarria" },
+        { "tierId": "tier-9", "playerId": "sami-valimaki" },
+        { "tierId": "tier-10", "playerId": "fred-couples" }
+      ]
+    },
+    {
+      "id": "participant-ace",
+      "slug": "ace",
+      "name": "Brendan",
+      "teamName": "Ace",
+      "tiebreaker": "-10",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "scottie-scheffler" },
+        { "tierId": "tier-2", "playerId": "patrick-reed" },
+        { "tierId": "tier-3", "playerId": "min-woo-lee" },
+        { "tierId": "tier-4", "playerId": "jake-knapp" },
+        { "tierId": "tier-5", "playerId": "maverick-mcnealy" },
+        { "tierId": "tier-6", "playerId": "marco-penge" },
+        { "tierId": "tier-7", "playerId": "ryan-fox" },
+        { "tierId": "tier-8", "playerId": "nicolas-echavarria" },
+        { "tierId": "tier-9", "playerId": "davis-riley" },
+        { "tierId": "tier-10", "playerId": "mateo-pulcini" }
       ]
     }
   ]
