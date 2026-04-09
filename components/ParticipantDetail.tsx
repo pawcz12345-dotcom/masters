@@ -82,96 +82,94 @@ export default function ParticipantDetail({ score, ownershipCount, totalParticip
                 </span>
               </div>
 
-              {/* Main row */}
-              <div className="flex items-center gap-3 sm:gap-4">
-                {/* Left: headshot + name */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <img
-                    src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
-                    alt={liveData?.displayName ?? player.displayName}
-                    width={44} height={44}
-                    loading="lazy"
-                    className={`rounded-full object-cover bg-masters-hover dark:bg-masters-d-hover ring-1 ring-masters-border dark:ring-masters-d-border shrink-0 ${isCut ? 'grayscale opacity-50' : ''}`}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className={`text-base font-semibold leading-tight ${isCut ? 'line-through text-masters-ink-3 dark:text-masters-d-ink-3' : 'text-masters-ink dark:text-masters-d-ink'}`}>
-                        {emoji && <span className="mr-1">{emoji}</span>}
-                        {liveData?.displayName ?? player.displayName}
-                        {isCut && <span className="ml-2 text-xs font-bold text-masters-red dark:text-masters-d-red">CUT</span>}
-                      </p>
-                      <button
-                        onClick={() => toggleTier(tier.id)}
-                        className="text-masters-ink-4 dark:text-masters-d-ink-4 hover:text-masters-ink-2 dark:hover:text-masters-d-ink-2 transition-colors shrink-0"
-                      >
-                        <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </div>
-                    {roundStats.length > 0 && (
-                      <div className="flex items-center gap-3 mt-1">
-                        {roundStats.map((s) => (
-                          <span key={s.name} className="text-xs">
-                            <span className="text-masters-ink-3 dark:text-masters-d-ink-3">{s.name} </span>
-                            <span className="font-medium text-masters-ink-2 dark:text-masters-d-ink-2">{s.displayValue}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+              {/* Main row: headshot + name + expand button */}
+              <div className="flex items-center gap-3">
+                <img
+                  src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
+                  alt={liveData?.displayName ?? player.displayName}
+                  width={44} height={44}
+                  loading="lazy"
+                  className={`rounded-full object-cover bg-masters-hover dark:bg-masters-d-hover ring-1 ring-masters-border dark:ring-masters-d-border shrink-0 ${isCut ? 'grayscale opacity-50' : ''}`}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-base font-semibold leading-tight truncate ${isCut ? 'line-through text-masters-ink-3 dark:text-masters-d-ink-3' : 'text-masters-ink dark:text-masters-d-ink'}`}>
+                      {emoji && <span className="mr-1">{emoji}</span>}
+                      {liveData?.displayName ?? player.displayName}
+                      {isCut && <span className="ml-2 text-xs font-bold text-masters-red dark:text-masters-d-red not-italic no-underline">CUT</span>}
+                    </p>
+                    <button
+                      onClick={() => toggleTier(tier.id)}
+                      className="p-1.5 -m-1.5 text-masters-ink-4 dark:text-masters-d-ink-4 hover:text-masters-ink-2 dark:hover:text-masters-d-ink-2 transition-colors shrink-0"
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
                   </div>
-                </div>
-
-                {/* Right: stats */}
-                <div className="flex items-center gap-3 sm:gap-4 shrink-0 flex-wrap justify-end">
-                  {[
-                    { label: 'Pos', value: isPreTournament ? null : isCut ? '—' : (liveData?.position || '—') },
-                    { label: 'Score', value: isPreTournament ? null : (liveData?.scoreDisplay || 'E'), isScore: true },
-                    { label: 'Thru', value: isPreTournament ? null :
-                      liveData?.state === 'in' && (liveData.thru > 0) ? String(liveData.thru) :
-                      liveData?.state === 'post' ? 'F' : '—' },
-                  ].map(({ label, value, isScore }) => (
-                    <div key={label} className="text-center">
-                      <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">{label}</p>
-                      <p className={`text-sm font-semibold tabular-nums ${
-                        value == null ? 'text-masters-ink-4 dark:text-masters-d-ink-4' :
-                        isScore && value?.startsWith('-') ? 'text-masters-red dark:text-masters-d-red' :
-                        isScore && value === 'E' ? 'text-masters-ink dark:text-masters-d-ink' :
-                        isScore ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
-                        isCut && label === 'Pos' ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
-                        'text-masters-ink dark:text-masters-d-ink'
-                      }`}>
-                        {value ?? '—'}
-                      </p>
-                    </div>
-                  ))}
-
-                  {liveData && liveData.cutProbability > 0 && (
-                    <div className="text-center">
-                      <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Cut %</p>
-                      <p className={`text-sm font-semibold tabular-nums ${
-                        liveData.cutProbability >= 0.75 ? 'text-masters-green dark:text-masters-d-green' :
-                        liveData.cutProbability >= 0.50 ? 'text-masters-gold dark:text-masters-d-gold' :
-                        'text-masters-red dark:text-masters-d-red'
-                      }`}>
-                        {(liveData.cutProbability * 100).toFixed(0)}%
-                      </p>
+                  {roundStats.length > 0 && (
+                    <div className="flex items-center gap-3 mt-0.5">
+                      {roundStats.map((s) => (
+                        <span key={s.name} className="text-xs">
+                          <span className="text-masters-ink-3 dark:text-masters-d-ink-3">{s.name} </span>
+                          <span className="font-medium text-masters-ink-2 dark:text-masters-d-ink-2">{s.displayValue}</span>
+                        </span>
+                      ))}
                     </div>
                   )}
+                </div>
+              </div>
 
-                  <div className="text-center">
-                    <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Live $</p>
-                    <p className={`text-sm font-semibold tabular-nums ${liveData && liveData.projectedEarnings > 0 ? 'text-masters-green dark:text-masters-d-green' : 'text-masters-ink-4 dark:text-masters-d-ink-4'}`}>
-                      {liveData && liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
+              {/* Stats row — below name, full width */}
+              <div className="flex items-center gap-4 mt-3 flex-wrap">
+                {[
+                  { label: 'Pos', value: isPreTournament ? null : isCut ? '—' : (liveData?.position || '—') },
+                  { label: 'Score', value: isPreTournament ? null : (liveData?.scoreDisplay || 'E'), isScore: true },
+                  { label: 'Thru', value: isPreTournament ? null :
+                    liveData?.state === 'in' && (liveData.thru > 0) ? String(liveData.thru) :
+                    liveData?.state === 'post' ? 'F' : '—' },
+                ].map(({ label, value, isScore }) => (
+                  <div key={label} className="text-center">
+                    <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">{label}</p>
+                    <p className={`text-sm font-semibold tabular-nums ${
+                      value == null ? 'text-masters-ink-4 dark:text-masters-d-ink-4' :
+                      isScore && value?.startsWith('-') ? 'text-masters-red dark:text-masters-d-red' :
+                      isScore && value === 'E' ? 'text-masters-ink dark:text-masters-d-ink' :
+                      isScore ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
+                      isCut && label === 'Pos' ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
+                      'text-masters-ink dark:text-masters-d-ink'
+                    }`}>
+                      {value ?? '—'}
                     </p>
                   </div>
+                ))}
+
+                {liveData && liveData.cutProbability > 0 && (
                   <div className="text-center">
-                    <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">EV $</p>
-                    <p className={`text-sm font-semibold tabular-nums ${liveData && liveData.oddsEV > 0 ? 'text-masters-gold dark:text-masters-d-gold' : 'text-masters-ink-4 dark:text-masters-d-ink-4'}`}>
-                      {liveData && liveData.oddsEV > 0 ? liveData.oddsEVDisplay : '—'}
+                    <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Cut %</p>
+                    <p className={`text-sm font-semibold tabular-nums ${
+                      liveData.cutProbability >= 0.75 ? 'text-masters-green dark:text-masters-d-green' :
+                      liveData.cutProbability >= 0.50 ? 'text-masters-gold dark:text-masters-d-gold' :
+                      'text-masters-red dark:text-masters-d-red'
+                    }`}>
+                      {(liveData.cutProbability * 100).toFixed(0)}%
                     </p>
                   </div>
+                )}
+
+                <div className="text-center">
+                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Live $</p>
+                  <p className={`text-sm font-semibold tabular-nums ${liveData && liveData.projectedEarnings > 0 ? 'text-masters-green dark:text-masters-d-green' : 'text-masters-ink-4 dark:text-masters-d-ink-4'}`}>
+                    {liveData && liveData.projectedEarnings > 0 ? liveData.projectedEarningsDisplay : '$0'}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">EV $</p>
+                  <p className={`text-sm font-semibold tabular-nums ${liveData && liveData.oddsEV > 0 ? 'text-masters-gold dark:text-masters-d-gold' : 'text-masters-ink-4 dark:text-masters-d-ink-4'}`}>
+                    {liveData && liveData.oddsEV > 0 ? liveData.oddsEVDisplay : '—'}
+                  </p>
                 </div>
               </div>
             </div>

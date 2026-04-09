@@ -82,51 +82,50 @@ export default function TabView({
     <div className="bg-masters-card dark:bg-masters-d-card rounded-xl border border-masters-border dark:border-masters-d-border overflow-hidden shadow-sm">
 
       {/* Round selector */}
-      <div className="flex items-center gap-1 px-4 sm:px-6 pt-4 pb-0 flex-wrap border-b border-masters-border dark:border-masters-d-border">
-        {ALL_ROUNDS.map(({ round, label }) => {
-          const available = availableRounds.has(round);
-          const isActive = activeRound === round;
-          const isLiveTab = round === 99;
+      <div className="border-b border-masters-border dark:border-masters-d-border overflow-x-auto">
+        <div className="flex items-center gap-1 px-4 sm:px-6 pt-4 pb-3 min-w-max">
+          {ALL_ROUNDS.map(({ round, label }) => {
+            const available = availableRounds.has(round);
+            const isActive = activeRound === round;
+            const isLiveTab = round === 99;
 
-          if (!available) {
+            if (!available) {
+              return (
+                <div
+                  key={round}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium text-masters-ink-4 dark:text-masters-d-ink-4 cursor-not-allowed select-none flex items-center gap-1"
+                  title="Not yet available"
+                >
+                  {label}
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              );
+            }
+
             return (
-              <div
+              <button
                 key={round}
-                className="px-3 py-1.5 mb-3 rounded-full text-xs font-medium text-masters-ink-4 dark:text-masters-d-ink-4 cursor-not-allowed select-none flex items-center gap-1"
-                title="Not yet available"
+                onClick={() => updateRound(round)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-masters-green dark:focus-visible:ring-masters-d-green ${
+                  isActive
+                    ? isLiveTab
+                      ? 'bg-masters-green dark:bg-masters-d-green text-white'
+                      : 'bg-masters-ink dark:bg-masters-d-ink text-white dark:text-masters-d-bg'
+                    : 'text-masters-ink-2 dark:text-masters-d-ink-2 hover:text-masters-ink dark:hover:text-masters-d-ink hover:bg-masters-hover dark:hover:bg-masters-d-hover'
+                }`}
               >
+                {isLiveTab && currentStatus.state === 'in' && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/70' : 'bg-masters-green dark:bg-masters-d-green'} animate-pulse`} />
+                )}
                 {label}
-                {/* lock = future round not yet available */}
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
+              </button>
             );
-          }
+          })}
 
-          return (
-            <button
-              key={round}
-              onClick={() => updateRound(round)}
-              className={`px-3 py-1.5 mb-3 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-masters-green dark:focus-visible:ring-masters-d-green ${
-                isActive
-                  ? isLiveTab
-                    ? 'bg-masters-green dark:bg-masters-d-green text-white'
-                    : 'bg-masters-ink dark:bg-masters-d-ink text-white dark:text-masters-d-bg'
-                  : 'text-masters-ink-2 dark:text-masters-d-ink-2 hover:text-masters-ink dark:hover:text-masters-d-ink hover:bg-masters-hover dark:hover:bg-masters-d-hover'
-              }`}
-            >
-              {isLiveTab && currentStatus.state === 'in' && (
-                <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/70' : 'bg-masters-green dark:bg-masters-d-green'} animate-pulse`} />
-              )}
-              {label}
-            </button>
-          );
-        })}
-
-        <div className="ml-auto mb-3">
           {!isLive && roundData.savedAt && (
-            <span className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3">
+            <span className="ml-4 text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 whitespace-nowrap">
               Snapshot: {new Date(roundData.savedAt).toLocaleDateString('en-US', {
                 month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
               })}
