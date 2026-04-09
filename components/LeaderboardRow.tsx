@@ -138,8 +138,8 @@ export default function LeaderboardRow({
       {/* Expanded picks */}
       {expanded && (
         <tr className="border-b border-masters-border dark:border-masters-d-border bg-masters-hover/60 dark:bg-masters-d-hover/60">
-          <td colSpan={colSpan} className="px-4 sm:px-6 py-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 gap-y-4">
+          <td colSpan={colSpan} className="px-3 sm:px-6 py-3 sm:py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-3 gap-y-3 sm:gap-x-4 sm:gap-y-4">
               {s.picks.map(({ tier, player, liveData }) => {
                 const isCut = liveData?.isCut ?? false;
                 const score = liveData?.scoreDisplay;

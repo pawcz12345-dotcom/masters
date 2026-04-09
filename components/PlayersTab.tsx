@@ -193,19 +193,19 @@ export default function PlayersTab({
       </div>
 
       <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <table className="w-full text-sm min-w-[320px]">
+        <table className="w-full text-sm min-w-[820px]">
           <thead>
             <tr className="border-b border-masters-border dark:border-masters-d-border text-left">
-              {th('pos', 'Pos', 'w-10 pl-4 sm:pl-0 hidden sm:table-cell')}
+              {th('pos', 'Pos', 'w-10 pl-4 sm:pl-0')}
               <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 pl-4 sm:pl-0`}>Player</th>
-              {th('tier', 'Tier', 'text-center hidden sm:table-cell')}
-              {th('score', 'Score', 'text-right hidden md:table-cell')}
-              <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right hidden md:table-cell`}>Thru</th>
-              {th('cut', 'Cut %', 'text-right hidden sm:table-cell')}
-              {th('earnings', 'Live $', 'text-right hidden sm:table-cell')}
+              {th('tier', 'Tier', 'text-center')}
+              {th('score', 'Score', 'text-right')}
+              <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right`}>Thru</th>
+              {th('cut', 'Cut %', 'text-right')}
+              {th('earnings', 'Live $', 'text-right')}
               {th('ev', 'EV $', 'text-right')}
-              {th('ownership', 'Own%', 'text-right hidden sm:table-cell')}
-              <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right hidden lg:table-cell pr-2`}>Picked By</th>
+              {th('ownership', 'Own%', 'text-right')}
+              <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right pr-2`}>Picked By</th>
             </tr>
           </thead>
           <tbody>
@@ -227,7 +227,7 @@ export default function PlayersTab({
                     onClick={() => toggleExpand(p.espnId)}
                   >
                     {/* Pos */}
-                    <td className="py-3 pr-3 sm:pr-4 pl-4 sm:pl-0 hidden sm:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 pl-4 sm:pl-0">
                       <span className="font-semibold text-masters-ink-2 dark:text-masters-d-ink-2 tabular-nums text-sm">
                         {isPreTournament ? <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span> : p.position}
                       </span>
@@ -254,7 +254,7 @@ export default function PlayersTab({
                     </td>
 
                     {/* Tier */}
-                    <td className="py-3 pr-3 sm:pr-4 text-center hidden sm:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 text-center">
                       {p.tier ? (
                         <span className="text-xs font-medium text-masters-ink-2 dark:text-masters-d-ink-2 bg-masters-hover dark:bg-masters-d-hover border border-masters-border dark:border-masters-d-border px-2 py-0.5 rounded-full whitespace-nowrap">
                           {p.tier.name}
@@ -265,7 +265,7 @@ export default function PlayersTab({
                     </td>
 
                     {/* Score */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm hidden md:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
                       {isPreTournament ? (
                         <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
                       ) : (
@@ -278,14 +278,14 @@ export default function PlayersTab({
                     </td>
 
                     {/* Thru */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums text-masters-ink-2 dark:text-masters-d-ink-2 text-sm hidden md:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums text-masters-ink-2 dark:text-masters-d-ink-2 text-sm">
                       {isPreTournament ? <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
                         : p.state === 'in' && p.thru > 0 ? p.thru
                         : p.state === 'post' ? 'F' : '—'}
                     </td>
 
                     {/* Cut % */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm hidden sm:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
                       {hasCutProb ? (
                         <span className={cutColorClass(p.cutProbability)}>
                           {(p.cutProbability * 100).toFixed(0)}%
@@ -294,7 +294,7 @@ export default function PlayersTab({
                     </td>
 
                     {/* Live $ */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm hidden sm:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
                       {p.projectedEarnings > 0 ? (
                         <span className="text-masters-green dark:text-masters-d-green">{p.projectedEarningsDisplay}</span>
                       ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">$0</span>}
@@ -308,7 +308,7 @@ export default function PlayersTab({
                     </td>
 
                     {/* Own% */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm hidden sm:table-cell">
+                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
                       {p.pickedBy.length > 0 ? (
                         <span className="text-masters-ink-2 dark:text-masters-d-ink-2">
                           {((p.pickedBy.length / standings.length) * 100).toFixed(0)}%
@@ -317,7 +317,7 @@ export default function PlayersTab({
                     </td>
 
                     {/* Picked By */}
-                    <td className="py-3 pr-2 text-right hidden lg:table-cell">
+                    <td className="py-3 pr-2 text-right">
                       {p.pickedBy.length > 0 ? (
                         <div className="flex flex-wrap gap-1 justify-end">
                           {p.pickedBy.map((participant) => (
@@ -392,27 +392,6 @@ export default function PlayersTab({
                             </>
                           )}
 
-                          {/* Picked By — shown in expanded on smaller screens */}
-                          {p.pickedBy.length > 0 && (
-                            <>
-                              <div className="h-8 w-px bg-masters-border dark:bg-masters-d-border lg:hidden" />
-                              <div className="lg:hidden">
-                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-1">Picked By</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {p.pickedBy.map((participant) => (
-                                    <a
-                                      key={participant.slug}
-                                      href={`/participant/${participant.slug}`}
-                                      className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-masters-green/10 dark:bg-masters-d-green/10 text-masters-green dark:text-masters-d-green border border-masters-green/20 dark:border-masters-d-green/20 whitespace-nowrap"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {participant.teamName ?? participant.name}
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            </>
-                          )}
                         </div>
                       </td>
                     </tr>

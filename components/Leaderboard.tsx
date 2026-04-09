@@ -23,19 +23,27 @@ const tooltipStyle: React.CSSProperties = {
 };
 
 function InfoTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <span className="relative inline-block group align-middle ml-1">
-      <span
-        className="cursor-help text-masters-ink-4 dark:text-masters-d-ink-4 hover:text-masters-ink-2 dark:hover:text-masters-d-ink-2 text-[10px] font-bold border border-masters-border dark:border-masters-d-border rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none transition-colors"
+    <span className="relative inline-block align-middle ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        aria-label={text}
+        className="cursor-help text-masters-ink-4 dark:text-masters-d-ink-4 hover:text-masters-ink-2 dark:hover:text-masters-d-ink-2 text-[10px] font-bold border border-masters-border dark:border-masters-d-border rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none transition-colors focus:outline-none"
       >
         i
-      </span>
-      <span
-        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-2xl"
-        style={tooltipStyle}
-      >
-        {text}
-      </span>
+      </button>
+      {open && (
+        <span
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 rounded-lg px-3 py-2 z-50 shadow-2xl"
+          style={tooltipStyle}
+        >
+          {text}
+        </span>
+      )}
     </span>
   );
 }
