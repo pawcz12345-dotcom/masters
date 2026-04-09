@@ -4,7 +4,7 @@
 @variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-libre-franklin);
+  --font-sans: var(--font-baskervville);
 
   /* ── Light mode ─────────────────────────────────────── */
   --color-masters-bg:       #F5F0E8;
@@ -39,7 +39,7 @@
 }
 
 body {
-  font-family: var(--font-sans, 'Libre Franklin', 'BentonSans', Arial, Helvetica, sans-serif);
+  font-family: var(--font-sans, 'Baskervville', Georgia, serif);
   background-color: #F5F0E8;
   color: #1A2A1E;
 }

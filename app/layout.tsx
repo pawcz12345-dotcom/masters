@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Libre_Franklin } from "next/font/google";
+import { Baskervville } from "next/font/google";
 import "./globals.css";
 
-const libreFranklin = Libre_Franklin({
+const baskervville = Baskervville({
   subsets: ["latin"],
-  variable: "--font-libre-franklin",
+  variable: "--font-baskervville",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={libreFranklin.variable} suppressHydrationWarning>
+    <html lang="en" className={baskervville.variable} suppressHydrationWarning>
       <head>
         {/* Prevent flash of wrong theme */}
         <script
