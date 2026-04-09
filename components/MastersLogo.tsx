@@ -33,9 +33,6 @@ export function MastersLogoMark({ size = 40 }: { size?: number }) {
       {/* Augusta green background */}
       <circle cx="40" cy="40" r="39" fill="#004F38" />
 
-      {/* Thin gold ring */}
-      <circle cx="40" cy="40" r="37" fill="none" stroke="#C49A00" strokeWidth="0.8" />
-
       {/* US map — depth shadow */}
       <path d={US_PATH} fill="#003A2A" transform="translate(0.7,0.9)" />
 
@@ -60,8 +57,8 @@ export function MastersLogoMark({ size = 40 }: { size?: number }) {
         textAnchor="middle"
         fill="#F0BE18"
         fontSize="6"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontStyle="italic"
+        fontFamily="'Libre Franklin', 'BentonSans', Arial, Helvetica, sans-serif"
+        fontStyle="normal"
         letterSpacing="2.5"
       >THE</text>
 
@@ -71,8 +68,8 @@ export function MastersLogoMark({ size = 40 }: { size?: number }) {
         textAnchor="middle"
         fill="white"
         fontSize="9.5"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontStyle="italic"
+        fontFamily="'Libre Franklin', 'BentonSans', Arial, Helvetica, sans-serif"
+        fontStyle="normal"
         letterSpacing="1"
       >MASTERS</text>
     </svg>
