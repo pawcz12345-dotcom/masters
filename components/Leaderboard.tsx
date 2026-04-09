@@ -22,8 +22,11 @@ const tooltipStyle: React.CSSProperties = {
   border: '1px solid #1A3D2A',
 };
 
-function InfoTooltip({ text }: { text: string }) {
+function InfoTooltip({ text, align = 'center' }: { text: string; align?: 'center' | 'right' }) {
   const [open, setOpen] = useState(false);
+  const posClass = align === 'right'
+    ? 'right-0'
+    : 'left-1/2 -translate-x-1/2';
   return (
     <span className="relative inline-block align-middle ml-1">
       <button
@@ -38,7 +41,7 @@ function InfoTooltip({ text }: { text: string }) {
       </button>
       {open && (
         <span
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 rounded-lg px-3 py-2 z-50 shadow-2xl"
+          className={`absolute top-full ${posClass} mt-1 rounded-lg px-3 py-2 z-50 shadow-2xl`}
           style={tooltipStyle}
         >
           {text}
@@ -150,8 +153,8 @@ export default function Leaderboard({ standings, status }: {
             {th('ownership', <>Ownership<InfoTooltip text="How popular your picks are. Lower = more contrarian, which pays off more if those players outperform." /></>, 'text-right')}
             {th('score', <>Score<InfoTooltip text="Combined score vs par for all 10 picks. Red = under par (good)." /></>, 'text-right')}
             {th('evPurse', <>EV Purse<InfoTooltip text="Expected prize earnings based on betting odds — a forecast of how your picks will finish." /></>, 'text-right')}
-            {th('livePurse', <>Live Purse<InfoTooltip text="What your picks would earn if the tournament ended right now. This determines your rank." /></>, 'text-right')}
-            {th('payout', <>{payoutLabel}<InfoTooltip text={`What you'd win right now. The $${totalPot} pot goes to 1st place — split if tied.`} /></>, 'text-right')}
+            {th('livePurse', <>Live Purse<InfoTooltip text="What your picks would earn if the tournament ended right now. This determines your rank." align="right" /></>, 'text-right')}
+            {th('payout', <>{payoutLabel}<InfoTooltip text={`What you'd win right now. The $${totalPot} pot goes to 1st place — split if tied.`} align="right" /></>, 'text-right')}
           </tr>
         </thead>
         <tbody>
