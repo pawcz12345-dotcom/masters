@@ -76,6 +76,9 @@ export default function TabView({
       ? liveRound
       : snapshotRounds.find((r) => r.round === activeRound) ?? liveRound;
 
+  // True when viewing a snapshot round that exists
+  const hasSnapshot = activeRound === 99 || snapshotRounds.some((r) => r.round === activeRound);
+
   const isLive = activeRound === 99;
 
   return (
