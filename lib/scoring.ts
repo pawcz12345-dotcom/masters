@@ -140,6 +140,8 @@ export function computeStandings(
           earningsDisplay: earnings > 0 ? formatCurrency(earnings) : '$0',
           projectedEarningsDisplay: projected > 0 ? formatCurrency(projected) : '$0',
           scoreDisplay,
+          teeTime: competitor.status?.teeTime ?? '',
+          startHole: competitor.status?.startHole ?? 1,
           position: isCut ? 'CUT' : (competitor.status?.position?.displayName ?? '-'),
           thru: competitor.status?.thru ?? 0,
           state: competitor.status?.type?.state ?? 'pre',

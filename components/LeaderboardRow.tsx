@@ -107,6 +107,22 @@ export default function LeaderboardRow({
           )}
         </td>
 
+        {/* Holes played */}
+        <td className="py-4 pr-4 sm:pr-6 text-right tabular-nums text-sm text-masters-ink-2 dark:text-masters-d-ink-2">
+          {status.state === 'pre' ? (
+            <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
+          ) : (
+            (() => {
+              const holesPlayed = s.picks.reduce((sum, { liveData }) => {
+                if (!liveData || liveData.isCut) return sum;
+                if (liveData.state === 'post') return sum + 18;
+                return sum + (liveData.thru ?? 0);
+              }, 0);
+              return <span className="font-medium">{holesPlayed}</span>;
+            })()
+          )}
+        </td>
+
         {/* EV Purse — gold, no blue */}
         <td className="py-4 pr-4 sm:pr-6 text-right font-medium tabular-nums text-sm">
           {s.oddsEV > 0 ? (
@@ -178,7 +194,21 @@ export default function LeaderboardRow({
                           </span>
                           {' · '}
                           <span className="text-masters-ink-3 dark:text-masters-d-ink-3">
-                            {status.state === 'pre' ? <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span> : pos}
+                            {status.state === 'pre'
+                              ? <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
+                              : isCut ? 'CUT'
+                              : liveData?.state === 'post' ? 'F'
+                              : liveData?.state === 'in' && (liveData.thru ?? 0) > 0
+                                ? `Thru ${liveData.thru}`
+                                : liveData?.teeTime
+                                  ? (() => {
+                                      try {
+                                        const d = new Date(liveData.teeTime);
+                                        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+                                      } catch { return pos; }
+                                    })()
+                                  : pos
+                            }
                           </span>
                         </p>
                         <p className="mt-1 flex items-center gap-1 text-[11px]">

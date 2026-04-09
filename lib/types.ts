@@ -67,6 +67,9 @@ export interface ESPNCompetitor {
   };
   status: {
     thru: number;
+    teeTime?: string;   // ISO string e.g. "2026-04-09T14:07Z"
+    detail?: string;    // "10:07 AM ET" or "E(5)" or "-3(F)"
+    startHole?: number;
     position: {
       displayName: string;
       isTie: boolean;
@@ -102,6 +105,8 @@ export interface PlayerLiveData {
   scoreDisplay: string;
   position: string;
   thru: number;
+  teeTime: string;    // "10:07 AM ET" or empty
+  startHole: number;
   state: 'pre' | 'in' | 'post';
   isCut: boolean;
   statistics: Array<{ name: string; displayValue: string }>;

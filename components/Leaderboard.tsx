@@ -144,7 +144,7 @@ export default function Leaderboard({ standings, status }: {
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table className="w-full text-sm min-w-[780px]">
+      <table className="w-full text-sm min-w-[860px]">
         <thead>
           <tr className="border-b border-masters-border dark:border-masters-d-border text-left">
             {th('rank', 'Rank', 'w-12 pl-4 sm:pl-0')}
@@ -152,6 +152,7 @@ export default function Leaderboard({ standings, status }: {
             {th('cuts', <>{cutsLabel}<InfoTooltip text="How many of your 10 players made (or are projected to make) the cut. More is better." /></>, 'text-center')}
             {th('ownership', <>Ownership<InfoTooltip text="How popular your picks are. Lower = more contrarian, which pays off more if those players outperform." /></>, 'text-right')}
             {th('score', <>Score<InfoTooltip text="Combined score vs par for all 10 picks. Red = under par (good)." /></>, 'text-right')}
+            <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right`}>Holes</th>
             {th('evPurse', <>EV Purse<InfoTooltip text="Expected prize earnings based on betting odds — a forecast of how your picks will finish." /></>, 'text-right')}
             {th('livePurse', <>Live Purse<InfoTooltip text="What your picks would earn if the tournament ended right now. This determines your rank." align="right" /></>, 'text-right')}
             {th('payout', <>{payoutLabel}<InfoTooltip text={`What you'd win right now. The $${totalPot} pot goes to 1st place — split if tied.`} align="right" /></>, 'text-right')}
