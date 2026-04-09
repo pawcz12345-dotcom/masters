@@ -152,12 +152,9 @@ export default function LeaderboardRow({
 
                 return (
                   <div key={tier.id} className={isCut ? 'opacity-40' : ''}>
-                    <div className="flex items-center justify-between gap-1 mb-2">
-                      <p className="text-masters-ink-3 dark:text-masters-d-ink-3 font-semibold uppercase tracking-wider text-[10px]">
-                        {tier.name}
-                      </p>
-                      <p className="text-masters-ink-4 dark:text-masters-d-ink-4 text-[10px]">{pct}%</p>
-                    </div>
+                    <p className="text-masters-ink-3 dark:text-masters-d-ink-3 font-semibold uppercase tracking-wider text-[10px] mb-2">
+                      {tier.name}
+                    </p>
                     <div className="flex items-center gap-2">
                       <img
                         src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
@@ -167,9 +164,14 @@ export default function LeaderboardRow({
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                       <div>
-                        <p className={`font-semibold text-xs leading-tight ${isCut ? 'line-through text-masters-ink-3 dark:text-masters-d-ink-3' : 'text-masters-ink dark:text-masters-d-ink'}`}>
-                          {emoji && <span className="mr-1">{emoji}</span>}{name}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className={`font-semibold text-xs leading-tight ${isCut ? 'line-through text-masters-ink-3 dark:text-masters-d-ink-3' : 'text-masters-ink dark:text-masters-d-ink'}`}>
+                            {emoji && <span className="mr-1">{emoji}</span>}{name}
+                          </p>
+                          <span className="text-[10px] text-masters-ink-4 dark:text-masters-d-ink-4 whitespace-nowrap">
+                            <span className="uppercase tracking-wider text-masters-ink-3 dark:text-masters-d-ink-3">OWN</span> {pct}%
+                          </span>
+                        </div>
                         <p className="text-xs mt-0.5">
                           <span className={score?.startsWith('-') ? 'text-masters-red dark:text-masters-d-red font-medium' : 'text-masters-ink-2 dark:text-masters-d-ink-2'}>
                             {status.state === 'pre' ? <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span> : (score ?? 'E')}

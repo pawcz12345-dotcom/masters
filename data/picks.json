@@ -303,6 +303,25 @@
         { "tierId": "tier-9", "playerId": "davis-riley" },
         { "tierId": "tier-10", "playerId": "mateo-pulcini" }
       ]
+    },
+    {
+      "id": "participant-jason",
+      "slug": "jason",
+      "name": "Jason",
+      "teamName": "Derek Sucks",
+      "tiebreaker": "-20",
+      "picks": [
+        { "tierId": "tier-1", "playerId": "jon-rahm" },
+        { "tierId": "tier-2", "playerId": "hideki-matsuyama" },
+        { "tierId": "tier-3", "playerId": "viktor-hovland" },
+        { "tierId": "tier-4", "playerId": "shane-lowry" },
+        { "tierId": "tier-5", "playerId": "sungjae-im" },
+        { "tierId": "tier-6", "playerId": "keegan-bradley" },
+        { "tierId": "tier-7", "playerId": "wyndham-clark" },
+        { "tierId": "tier-8", "playerId": "tom-mckibbin" },
+        { "tierId": "tier-9", "playerId": "bubba-watson" },
+        { "tierId": "tier-10", "playerId": "vijay-singh" }
+      ]
     }
   ]
 }
