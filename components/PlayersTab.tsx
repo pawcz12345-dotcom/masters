@@ -119,11 +119,15 @@ export default function PlayersTab({
         (s) => ROUND_NAMES.has(s.name) && s.displayValue && s.displayValue !== '--'
       );
 
+      const scoreToParStat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
+      const rawScore = scoreToParStat && scoreToParStat !== '-' ? scoreToParStat : (c.score?.displayValue ?? 'E');
+      const scoreDisplay = rawScore === '-' ? 'E' : rawScore;
+
       return {
         espnId: c.athlete.id, displayName: c.athlete.displayName, tier,
         sortOrder: c.sortOrder ?? 999,
         position: isCut ? 'CUT' : (c.status?.position?.displayName ?? '—'),
-        scoreDisplay: c.score?.displayValue ?? 'E',
+        scoreDisplay,
         thru: c.status?.thru ?? 0,
         state: c.status?.type?.state ?? 'pre',
         isCut, projectedEarnings, projectedEarningsDisplay,
