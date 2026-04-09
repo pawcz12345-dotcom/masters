@@ -11,7 +11,7 @@ import type {
 import type { OddsResult } from './odds';
 import { formatCurrency } from './utils';
 
-function computeProjectedEarnings(
+export function computeProjectedEarnings(
   competitors: ESPNCompetitor[],
   pursePayouts: PurseEntry[],
   status: ESPNTournamentStatus

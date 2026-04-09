@@ -44,6 +44,7 @@ export interface RoundData {
   competitors: ESPNCompetitor[];
   evRecord: Record<string, number>;
   cutProbRecord: Record<string, number>;
+  projectedRecord: Record<string, number>;
 }
 
 export interface PurseEntry {

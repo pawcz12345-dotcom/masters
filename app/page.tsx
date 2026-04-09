@@ -2,7 +2,7 @@ export const revalidate = 60;
 
 import { Suspense } from 'react';
 import { fetchESPNLeaderboard } from '@/lib/espn';
-import { computeStandings } from '@/lib/scoring';
+import { computeStandings, computeProjectedEarnings } from '@/lib/scoring';
 import { fetchOddsEV } from '@/lib/odds';
 import tiersData from '@/data/tiers.json';
 import playersData from '@/data/players.json';
@@ -47,6 +47,10 @@ export default async function Home() {
     for (const [k, v] of oddsEV.cutProb) cutProbRecord[k] = v;
   }
 
+  const liveProjectedMap = computeProjectedEarnings(espn.competitors, purse, espn.status);
+  const liveProjectedRecord: Record<string, number> = {};
+  for (const [k, v] of liveProjectedMap) liveProjectedRecord[k] = v;
+
   const rawSnapshots: { raw: unknown; round: number }[] = [
     { raw: r0Raw, round: 0 }, { raw: r1Raw, round: 1 }, { raw: r2Raw, round: 2 },
     { raw: r3Raw, round: 3 }, { raw: r4Raw, round: 4 },
@@ -58,18 +62,21 @@ export default async function Home() {
     const snapStandings = computeStandings(
       participants, players, tiers, snap.competitors, purse, snap.status, null
     );
+    const snapProjectedMap = computeProjectedEarnings(snap.competitors, purse, snap.status);
+    const snapProjectedRecord: Record<string, number> = {};
+    for (const [k, v] of snapProjectedMap) snapProjectedRecord[k] = v;
     return [{
       round, label: ROUND_LABELS[round] ?? `R${round}`,
       savedAt: snap.savedAt, status: snap.status,
       standings: snapStandings, competitors: snap.competitors,
-      evRecord, cutProbRecord,
+      evRecord, cutProbRecord, projectedRecord: snapProjectedRecord,
     }];
   });
 
   const liveRound: RoundData = {
     round: 99, label: 'Live', status: espn.status,
     standings: liveStandings, competitors: espn.competitors,
-    evRecord, cutProbRecord,
+    evRecord, cutProbRecord, projectedRecord: liveProjectedRecord,
   };
 
   const isLive = espn.status.state === 'in';

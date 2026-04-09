@@ -39,8 +39,18 @@ function cutColorClass(prob: number): string {
   return 'text-masters-red dark:text-masters-d-red';
 }
 
+type ColumnKey = 'tier' | 'cut' | 'ev' | 'ownership' | 'pickedBy';
+
+const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
+  { key: 'tier', label: 'Tier' },
+  { key: 'cut', label: 'Cut %' },
+  { key: 'ev', label: 'EV $' },
+  { key: 'ownership', label: 'Own%' },
+  { key: 'pickedBy', label: 'Picked By' },
+];
+
 export default function PlayersTab({
-  competitors, players, tiers, standings, status, evRecord, cutProbRecord,
+  competitors, players, tiers, standings, status, evRecord, cutProbRecord, projectedRecord,
 }: {
   competitors: ESPNCompetitor[];
   players: Player[];
@@ -49,11 +59,24 @@ export default function PlayersTab({
   status: ESPNTournamentStatus;
   evRecord: Record<string, number>;
   cutProbRecord: Record<string, number>;
+  projectedRecord: Record<string, number>;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>('ev');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [visibleCols, setVisibleCols] = useState<Set<ColumnKey>>(
+    new Set(['tier', 'cut', 'ev', 'ownership', 'pickedBy'])
+  );
+  const [colMenuOpen, setColMenuOpen] = useState(false);
+
+  function toggleCol(key: ColumnKey) {
+    setVisibleCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
 
   function toggleExpand(espnId: string) {
     setExpanded((prev) => {
@@ -94,12 +117,14 @@ export default function PlayersTab({
 
       let oddsEV = evRecord[c.athlete.id] ?? 0;
       let oddsEVDisplay = oddsEV > 0 ? formatCurrency(oddsEV) : '—';
-      let projectedEarnings = 0;
-      let projectedEarningsDisplay = '$0';
+      // Fall back to projectedRecord so unowned players still show a Live $ value
+      let projectedEarnings = projectedRecord[c.athlete.id] ?? 0;
+      let projectedEarningsDisplay = projectedEarnings > 0 ? formatCurrency(projectedEarnings) : '$0';
 
       for (const s of standings) {
         for (const { player, liveData } of s.picks) {
           if (player.espnId === c.athlete.id && liveData) {
+            // Use liveData values for owned players (already computed with odds EV etc.)
             projectedEarnings = liveData.projectedEarnings;
             projectedEarningsDisplay = liveData.projectedEarningsDisplay;
             oddsEV = liveData.oddsEV;
@@ -107,11 +132,6 @@ export default function PlayersTab({
             break;
           }
         }
-      }
-
-      if (projectedEarnings === 0 && c.earnings > 0) {
-        projectedEarnings = c.earnings;
-        projectedEarningsDisplay = formatCurrency(c.earnings);
       }
 
       const ROUND_NAMES = new Set(['R1', 'R2', 'R3', 'R4']);
@@ -186,7 +206,7 @@ export default function PlayersTab({
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="mb-4 flex items-center gap-3 flex-wrap">
         <input
           type="text"
           placeholder="Search player…"
@@ -194,6 +214,41 @@ export default function PlayersTab({
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-64 px-3 py-1.5 text-sm bg-masters-hover dark:bg-masters-d-hover border border-masters-border dark:border-masters-d-border rounded-lg text-masters-ink dark:text-masters-d-ink placeholder-masters-ink-3 dark:placeholder-masters-d-ink-3 focus:outline-none focus:ring-2 focus:ring-masters-green dark:focus:ring-masters-d-green focus:border-transparent"
         />
+
+        {/* Column visibility toggle */}
+        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setColMenuOpen(false); }}>
+          <button
+            type="button"
+            onClick={() => setColMenuOpen((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-masters-border dark:border-masters-d-border text-masters-ink-2 dark:text-masters-d-ink-2 bg-masters-hover dark:bg-masters-d-hover hover:text-masters-ink dark:hover:text-masters-d-ink transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+            </svg>
+            Columns
+          </button>
+          {colMenuOpen && (
+            <div className="absolute left-0 top-full mt-1 z-50 bg-masters-card dark:bg-masters-d-card border border-masters-border dark:border-masters-d-border rounded-lg shadow-xl py-1 min-w-[140px]">
+              {ALL_COLUMNS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleCol(key)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-masters-hover dark:hover:bg-masters-d-hover transition-colors text-left"
+                >
+                  <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${visibleCols.has(key) ? 'bg-masters-green dark:bg-masters-d-green border-masters-green dark:border-masters-d-green' : 'border-masters-border dark:border-masters-d-border'}`}>
+                    {visibleCols.has(key) && (
+                      <svg className="w-2.5 h-2.5 text-white dark:text-masters-d-bg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="text-masters-ink dark:text-masters-d-ink">{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -202,14 +257,14 @@ export default function PlayersTab({
             <tr className="border-b border-masters-border dark:border-masters-d-border text-left">
               {th('pos', 'Pos', 'w-10 pl-4 sm:pl-0')}
               <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 pl-4 sm:pl-0`}>Player</th>
-              {th('tier', 'Tier', 'text-center')}
+              {visibleCols.has('tier') && th('tier', 'Tier', 'text-center')}
               {th('score', 'Score', 'text-right')}
               <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right`}>Thru</th>
-              {th('cut', 'Cut %', 'text-right')}
+              {visibleCols.has('cut') && th('cut', 'Cut %', 'text-right')}
               {th('earnings', 'Live $', 'text-right')}
-              {th('ev', 'EV $', 'text-right')}
-              {th('ownership', 'Own%', 'text-right')}
-              <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right pr-2`}>Picked By</th>
+              {visibleCols.has('ev') && th('ev', 'EV $', 'text-right')}
+              {visibleCols.has('ownership') && th('ownership', 'Own%', 'text-right')}
+              {visibleCols.has('pickedBy') && <th className={`${thClass} cursor-default hover:text-masters-ink-3 dark:hover:text-masters-d-ink-3 text-right pr-2`}>Picked By</th>}
             </tr>
           </thead>
           <tbody>
@@ -258,15 +313,17 @@ export default function PlayersTab({
                     </td>
 
                     {/* Tier */}
-                    <td className="py-3 pr-3 sm:pr-4 text-center">
-                      {p.tier ? (
-                        <span className="text-xs font-medium text-masters-ink-2 dark:text-masters-d-ink-2 bg-masters-hover dark:bg-masters-d-hover border border-masters-border dark:border-masters-d-border px-2 py-0.5 rounded-full whitespace-nowrap">
-                          {p.tier.name}
-                        </span>
-                      ) : (
-                        <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
-                      )}
-                    </td>
+                    {visibleCols.has('tier') && (
+                      <td className="py-3 pr-3 sm:pr-4 text-center">
+                        {p.tier ? (
+                          <span className="text-xs font-medium text-masters-ink-2 dark:text-masters-d-ink-2 bg-masters-hover dark:bg-masters-d-hover border border-masters-border dark:border-masters-d-border px-2 py-0.5 rounded-full whitespace-nowrap">
+                            {p.tier.name}
+                          </span>
+                        ) : (
+                          <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>
+                        )}
+                      </td>
+                    )}
 
                     {/* Score */}
                     <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
@@ -289,13 +346,15 @@ export default function PlayersTab({
                     </td>
 
                     {/* Cut % */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
-                      {hasCutProb ? (
-                        <span className={cutColorClass(p.cutProbability)}>
-                          {(p.cutProbability * 100).toFixed(0)}%
-                        </span>
-                      ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
-                    </td>
+                    {visibleCols.has('cut') && (
+                      <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
+                        {hasCutProb ? (
+                          <span className={cutColorClass(p.cutProbability)}>
+                            {(p.cutProbability * 100).toFixed(0)}%
+                          </span>
+                        ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
+                      </td>
+                    )}
 
                     {/* Live $ */}
                     <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
@@ -305,39 +364,45 @@ export default function PlayersTab({
                     </td>
 
                     {/* EV $ — gold */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
-                      {p.oddsEV > 0 ? (
-                        <span className="text-masters-gold dark:text-masters-d-gold">{p.oddsEVDisplay}</span>
-                      ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
-                    </td>
+                    {visibleCols.has('ev') && (
+                      <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
+                        {p.oddsEV > 0 ? (
+                          <span className="text-masters-gold dark:text-masters-d-gold">{p.oddsEVDisplay}</span>
+                        ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
+                      </td>
+                    )}
 
                     {/* Own% */}
-                    <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
-                      {p.pickedBy.length > 0 ? (
-                        <span className="text-masters-ink-2 dark:text-masters-d-ink-2">
-                          {((p.pickedBy.length / standings.length) * 100).toFixed(0)}%
-                        </span>
-                      ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
-                    </td>
+                    {visibleCols.has('ownership') && (
+                      <td className="py-3 pr-3 sm:pr-4 text-right tabular-nums font-medium text-sm">
+                        {p.pickedBy.length > 0 ? (
+                          <span className="text-masters-ink-2 dark:text-masters-d-ink-2">
+                            {((p.pickedBy.length / standings.length) * 100).toFixed(0)}%
+                          </span>
+                        ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
+                      </td>
+                    )}
 
                     {/* Picked By */}
-                    <td className="py-3 pr-2 text-right">
-                      {p.pickedBy.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 justify-end">
-                          {p.pickedBy.map((participant) => (
-                            <a
-                              key={participant.slug}
-                              href={`/participant/${participant.slug}`}
-                              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-masters-green/10 dark:bg-masters-d-green/10 text-masters-green dark:text-masters-d-green border border-masters-green/20 dark:border-masters-d-green/20 hover:bg-masters-green/20 dark:hover:bg-masters-d-green/20 transition-colors whitespace-nowrap"
-                              title={participant.name}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {participant.teamName ?? participant.name}
-                            </a>
-                          ))}
-                        </div>
-                      ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4 text-xs">—</span>}
-                    </td>
+                    {visibleCols.has('pickedBy') && (
+                      <td className="py-3 pr-2 text-right">
+                        {p.pickedBy.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {p.pickedBy.map((participant) => (
+                              <a
+                                key={participant.slug}
+                                href={`/participant/${participant.slug}`}
+                                className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-masters-green/10 dark:bg-masters-d-green/10 text-masters-green dark:text-masters-d-green border border-masters-green/20 dark:border-masters-d-green/20 hover:bg-masters-green/20 dark:hover:bg-masters-d-green/20 transition-colors whitespace-nowrap"
+                                title={participant.name}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {participant.teamName ?? participant.name}
+                              </a>
+                            ))}
+                          </div>
+                        ) : <span className="text-masters-ink-4 dark:text-masters-d-ink-4 text-xs">—</span>}
+                      </td>
+                    )}
                   </tr>
 
                   {/* Expanded row */}

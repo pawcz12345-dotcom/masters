@@ -177,6 +177,7 @@ export default function TabView({
               status={roundData.status}
               evRecord={roundData.evRecord}
               cutProbRecord={roundData.cutProbRecord}
+              projectedRecord={roundData.projectedRecord}
             />
           </>
         )}
