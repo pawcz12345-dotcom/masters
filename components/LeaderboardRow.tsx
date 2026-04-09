@@ -40,8 +40,17 @@ export default function LeaderboardRow({
   return (
     <>
       <tr
-        className={`border-b border-masters-border dark:border-masters-d-border transition-colors cursor-pointer ${expanded ? rowExpanded : rowBase}`}
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        className={`border-b border-masters-border dark:border-masters-d-border transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-masters-green dark:focus-visible:ring-masters-d-green ${expanded ? rowExpanded : rowBase}`}
         onClick={() => setExpanded((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded((v) => !v);
+          }
+        }}
       >
         {/* Rank */}
         <td className="py-4 pr-4 sm:pr-6 pl-4 sm:pl-0">
@@ -70,6 +79,18 @@ export default function LeaderboardRow({
               </svg>
             </span>
           </div>
+          {/* Mobile-only secondary stats row */}
+          {status.state !== 'pre' && (
+            <div className="flex items-center gap-2 mt-0.5 md:hidden text-xs">
+              <span className={cutsColor}>{alive}/{total}</span>
+              <span className="text-masters-ink-4 dark:text-masters-d-ink-4">·</span>
+              <span className={
+                s.totalScoreToPar < 0 ? 'text-masters-red dark:text-masters-d-red' :
+                s.totalScoreToPar > 0 ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
+                'text-masters-ink dark:text-masters-d-ink'
+              }>{s.totalScoreDisplay}</span>
+            </div>
+          )}
         </td>
 
         {/* Cuts */}
@@ -152,6 +173,7 @@ export default function LeaderboardRow({
                       <img
                         src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
                         alt={name} width={32} height={32}
+                        loading="lazy"
                         className="rounded-full object-cover bg-masters-hover dark:bg-masters-d-hover shrink-0 ring-1 ring-masters-border dark:ring-masters-d-border"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />

@@ -90,6 +90,7 @@ export default function ParticipantDetail({ score, ownershipCount, totalParticip
                     src={`https://a.espncdn.com/i/headshots/golf/players/full/${player.espnId}.png`}
                     alt={liveData?.displayName ?? player.displayName}
                     width={44} height={44}
+                    loading="lazy"
                     className={`rounded-full object-cover bg-masters-hover dark:bg-masters-d-hover ring-1 ring-masters-border dark:ring-masters-d-border shrink-0 ${isCut ? 'grayscale opacity-50' : ''}`}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />

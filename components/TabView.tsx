@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { ESPNTournamentStatus, RoundData, Tier, Player } from '@/lib/types';
 import Leaderboard from './Leaderboard';
 import PlayersTab from './PlayersTab';
@@ -31,14 +32,44 @@ export default function TabView({
   tiers: Tier[];
 }) {
   const isPreTournament = currentStatus.state === 'pre';
-  const [activeRound, setActiveRound] = useState<number>(isPreTournament ? 0 : 99);
-  const [contentTab, setContentTab] = useState<ContentTab>('standings');
 
   const availableRounds = new Set<number>([
     0,
     ...snapshotRounds.map((r) => r.round),
     ...(isPreTournament ? [] : [99]),
   ]);
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  function parseRoundParam(): number {
+    const raw = searchParams.get('round');
+    if (raw === null) return isPreTournament ? 0 : 99;
+    const n = parseInt(raw, 10);
+    return availableRounds.has(n) ? n : (isPreTournament ? 0 : 99);
+  }
+
+  function parseTabParam(): ContentTab {
+    return searchParams.get('tab') === 'players' ? 'players' : 'standings';
+  }
+
+  const [activeRound, setActiveRound] = useState<number>(parseRoundParam);
+  const [contentTab, setContentTab] = useState<ContentTab>(parseTabParam);
+
+  function updateRound(round: number) {
+    setActiveRound(round);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('round', String(round));
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
+  function updateTab(tab: ContentTab) {
+    setContentTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const roundData =
     activeRound === 99
@@ -65,6 +96,7 @@ export default function TabView({
                 title="Not yet available"
               >
                 {label}
+                {/* lock = future round not yet available */}
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -75,8 +107,8 @@ export default function TabView({
           return (
             <button
               key={round}
-              onClick={() => setActiveRound(round)}
-              className={`px-3 py-1.5 mb-3 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              onClick={() => updateRound(round)}
+              className={`px-3 py-1.5 mb-3 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-masters-green dark:focus-visible:ring-masters-d-green ${
                 isActive
                   ? isLiveTab
                     ? 'bg-masters-green dark:bg-masters-d-green text-white'
@@ -88,11 +120,6 @@ export default function TabView({
                 <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/70' : 'bg-masters-green dark:bg-masters-d-green'} animate-pulse`} />
               )}
               {label}
-              {!isLiveTab && round > 0 && available && !isActive && (
-                <svg className="w-3 h-3 text-masters-ink-4 dark:text-masters-d-ink-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              )}
             </button>
           );
         })}
@@ -113,8 +140,8 @@ export default function TabView({
         {CONTENT_TABS.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setContentTab(tab.id)}
-            className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            onClick={() => updateTab(tab.id)}
+            className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors -mb-px focus:outline-none focus-visible:ring-2 focus-visible:ring-masters-green dark:focus-visible:ring-masters-d-green ${
               contentTab === tab.id
                 ? 'border-masters-green dark:border-masters-d-green text-masters-green dark:text-masters-d-green'
                 : 'border-transparent text-masters-ink-3 dark:text-masters-d-ink-3 hover:text-masters-ink dark:hover:text-masters-d-ink'

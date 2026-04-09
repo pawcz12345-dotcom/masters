@@ -1,5 +1,6 @@
 export const revalidate = 60;
 
+import { Suspense } from 'react';
 import { fetchESPNLeaderboard } from '@/lib/espn';
 import { computeStandings } from '@/lib/scoring';
 import { fetchOddsEV } from '@/lib/odds';
@@ -98,17 +99,21 @@ export default async function Home() {
           <ThemeToggle />
         </div>
 
-        <TabView
-          liveRound={liveRound}
-          snapshotRounds={snapshotRounds}
-          currentStatus={espn.status}
-          players={players}
-          tiers={tiers}
-        />
+        <Suspense fallback={null}>
+          <TabView
+            liveRound={liveRound}
+            snapshotRounds={snapshotRounds}
+            currentStatus={espn.status}
+            players={players}
+            tiers={tiers}
+          />
+        </Suspense>
 
-        <p className="text-center text-xs text-masters-ink-4 dark:text-masters-d-ink-4 mt-6">
-          Scores update every 60 seconds during play
-        </p>
+        {isLive && (
+          <p className="text-center text-xs text-masters-ink-4 dark:text-masters-d-ink-4 mt-6">
+            Scores update every 60 seconds during play
+          </p>
+        )}
       </div>
     </main>
   );
