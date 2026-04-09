@@ -55,8 +55,11 @@ export default function LeaderboardRow({
         {/* Rank */}
         <td className="py-4 pr-4 sm:pr-6 pl-4 sm:pl-0">
           <span className={`font-bold tabular-nums text-sm ${
-            isTop3 && s.totalEarnings > 0
-              ? 'text-masters-gold dark:text-masters-d-gold'
+            s.totalEarnings === 0
+              ? 'text-masters-ink-3 dark:text-masters-d-ink-3'
+              : s.rank === 1 ? 'text-masters-gold dark:text-masters-d-gold'
+              : s.rank === 2 ? 'text-slate-400 dark:text-slate-300'
+              : s.rank === 3 ? 'text-amber-700 dark:text-amber-500'
               : 'text-masters-ink-3 dark:text-masters-d-ink-3'
           }`}>
             {s.rankDisplay}

@@ -11,7 +11,7 @@ const baskervville = Baskervville({
 });
 
 export const metadata: Metadata = {
-  title: "Green Jacket Pool",
+  title: "Masters Pool",
   description: "Masters Tournament 2026 Golf Pool Leaderboard",
 };
 

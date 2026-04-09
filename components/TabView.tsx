@@ -14,7 +14,7 @@ const CONTENT_TABS: { id: ContentTab; label: string }[] = [
 ];
 
 const ALL_ROUNDS = [
-  { round: 0, label: 'Pre' },
+  { round: 0, label: 'Pre-Tournament' },
   { round: 1, label: 'R1' },
   { round: 2, label: 'R2' },
   { round: 3, label: 'R3' },

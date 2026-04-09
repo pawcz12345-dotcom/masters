@@ -7,20 +7,20 @@
   --font-sans: var(--font-baskervville);
 
   /* ── Light mode ─────────────────────────────────────── */
-  --color-masters-bg:       #F5F0E8;
+  --color-masters-bg:       #F2EDE0;
   --color-masters-card:     #FFFFFF;
-  --color-masters-hover:    #EBF1EB;
-  --color-masters-border:   #C8D8CA;
-  --color-masters-ink:      #1A2A1E;
-  --color-masters-ink-2:    #4A6B57;
-  --color-masters-ink-3:    #849F8E;
-  --color-masters-ink-4:    #C5D5C9;
-  --color-masters-green:    #006747;
-  --color-masters-green-2:  #004F38;
-  --color-masters-gold:     #967200;
-  --color-masters-gold-2:   #C49200;
+  --color-masters-hover:    #E8EFE8;
+  --color-masters-border:   #B8CBBA;
+  --color-masters-ink:      #162318;
+  --color-masters-ink-2:    #3D5E4C;
+  --color-masters-ink-3:    #5A7868;
+  --color-masters-ink-4:    #8AAA96;
+  --color-masters-green:    #005C3C;
+  --color-masters-green-2:  #004530;
+  --color-masters-gold:     #7A5C00;
+  --color-masters-gold-2:   #A87A00;
   --color-masters-yellow:   #F2C029;
-  --color-masters-red:      #B8281E;
+  --color-masters-red:      #A82018;
 
   /* ── Dark mode ──────────────────────────────────────── */
   --color-masters-d-bg:     #080F0A;
