@@ -11,6 +11,67 @@ import type {
 import type { OddsResult } from './odds';
 import { formatCurrency } from './utils';
 
+/** Normal CDF using Abramowitz & Stegun approximation (max error < 7.5e-8). */
+function normalCDF(z: number): number {
+  if (z <= -8) return 0;
+  if (z >= 8) return 1;
+  const neg = z < 0;
+  const az = neg ? -z : z;
+  const t = 1 / (1 + 0.2316419 * az);
+  const pd = Math.exp(-0.5 * az * az) * 0.3989422820;
+  const poly =
+    t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  const cdf = 1 - pd * poly;
+  return neg ? 1 - cdf : cdf;
+}
+
+/**
+ * Estimate the projected cut line from current field standings.
+ * Returns the score-to-par at approximately the 50th position among players who have teed off.
+ */
+function estimateCutLine(competitors: ESPNCompetitor[]): number {
+  const scores: number[] = [];
+  for (const c of competitors) {
+    const state = c.status?.type?.state ?? 'pre';
+    const linescored = (c.linescores ?? []).filter((ls) => ls.value != null && ls.value > 0).length;
+    if (state === 'pre' && linescored === 0) continue;
+    const stat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
+    const raw = (stat && stat !== '-') ? stat : (c.score?.displayValue ?? null);
+    if (!raw || raw === '-') continue;
+    const n = raw === 'E' ? 0 : parseFloat(raw);
+    if (!isNaN(n)) scores.push(n);
+  }
+  if (scores.length === 0) return 5;
+  scores.sort((a, b) => a - b);
+  return scores[Math.min(49, scores.length - 1)];
+}
+
+/**
+ * Compute live-adjusted cut probability from current score and holes remaining to the cut.
+ * Uses a normal distribution model for remaining scoring variance at Augusta National
+ * (round SD ≈ 3.5 strokes → 0.825 strokes/hole).
+ *
+ * Pre-tournament (state === 'pre'): caller should use odds-based probability instead.
+ */
+function liveCutProbability(
+  scoreDisplay: string,
+  completedRounds: number,
+  thru: number,
+  state: string,
+  period: number,
+  isCut: boolean,
+  cutLine: number
+): number {
+  if (isCut) return 0;
+  if (period > 2) return 1;
+  const currentScore = scoreDisplay === 'E' ? 0 : (parseFloat(scoreDisplay) || 0);
+  const holesPlayed = completedRounds * 18 + (state === 'in' ? thru : 0);
+  const holesRemaining = Math.max(0, 36 - holesPlayed);
+  if (holesRemaining === 0) return currentScore <= cutLine ? 1 : 0;
+  const sdRemaining = 0.825 * Math.sqrt(holesRemaining);
+  return normalCDF((cutLine - currentScore) / sdRemaining);
+}
+
 export function computeProjectedEarnings(
   competitors: ESPNCompetitor[],
   pursePayouts: PurseEntry[],
@@ -137,6 +198,7 @@ export function computeStandings(
   );
 
   const isTournamentComplete = status.state === 'post' && status.period >= 4;
+  const estimatedCutLine = status.state !== 'pre' ? estimateCutLine(competitors) : 5;
 
   // Build participant scores
   const scores: ParticipantScore[] = participants.map((participant) => {
@@ -227,7 +289,9 @@ export function computeStandings(
           statistics: competitor.statistics ?? [],
           oddsEV: playerEV,
           oddsEVDisplay: playerEV > 0 ? formatCurrency(playerEV) : '$0',
-          cutProbability: oddsResult?.cutProb.get(player.espnId) ?? 0,
+          cutProbability: status.state === 'pre'
+            ? (oddsResult?.cutProb.get(player.espnId) ?? 0)
+            : liveCutProbability(scoreDisplay, completedRounds, competitor.status?.thru ?? 0, rawState, status.period, isCut, estimatedCutLine),
         };
 
         totalEarnings += projected;
