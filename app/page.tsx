@@ -2,7 +2,7 @@ export const revalidate = 60;
 
 import { Suspense } from 'react';
 import { fetchESPNLeaderboard } from '@/lib/espn';
-import { computeStandings, computeProjectedEarnings } from '@/lib/scoring';
+import { computeStandings, computeProjectedEarnings, computeLivePlayerStats } from '@/lib/scoring';
 import { fetchOddsEV } from '@/lib/odds';
 import tiersData from '@/data/tiers.json';
 import playersData from '@/data/players.json';
@@ -42,9 +42,10 @@ export default async function Home() {
 
   const evRecord: Record<string, number> = {};
   const cutProbRecord: Record<string, number> = {};
-  if (oddsEV) {
-    for (const [k, v] of oddsEV.ev) evRecord[k] = v;
-    for (const [k, v] of oddsEV.cutProb) cutProbRecord[k] = v;
+  const livePlayerStats = computeLivePlayerStats(espn.competitors, purse, espn.status, oddsEV);
+  for (const [k, v] of livePlayerStats) {
+    evRecord[k] = v.oddsEV;
+    cutProbRecord[k] = v.cutProbability;
   }
 
   const liveProjectedMap = computeProjectedEarnings(espn.competitors, purse, espn.status);
