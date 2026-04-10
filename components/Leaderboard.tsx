@@ -114,8 +114,9 @@ export default function Leaderboard({ standings, status }: {
     ownership: ownershipByParticipant.get(s.participant.id) ?? 0,
     holesPlayed: s.picks.reduce((sum, { liveData }) => {
       if (!liveData || liveData.isCut) return sum;
-      if (liveData.state === 'post') return sum + 18;
-      return sum + (liveData.thru ?? 0);
+      // completedRounds * 18 gives holes from finished rounds; add thru for active round
+      const base = (liveData.completedRounds ?? 0) * 18;
+      return sum + base + (liveData.state === 'in' ? (liveData.thru ?? 0) : 0);
     }, 0),
   })), [standings, ownershipByParticipant, cutDay]);
 

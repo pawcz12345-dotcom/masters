@@ -119,6 +119,8 @@ export interface PlayerLiveData {
   state: 'pre' | 'in' | 'post';
   isCut: boolean;
   sortOrder: number;
+  /** Number of fully completed rounds (0 = pre-tournament, 1 = after R1, etc.) */
+  completedRounds: number;
   statistics: Array<{ name: string; displayValue: string }>;
   oddsEV: number;
   oddsEVDisplay: string;

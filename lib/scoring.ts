@@ -35,12 +35,22 @@ export function computeProjectedEarnings(
     pursePayouts.map((p) => [p.position, p.amount])
   );
 
+  // Count rounds with a real stroke-total in linescores (value > 0 = strokes taken).
+  // An 'in' player's current round appears in linescores with a partial value — subtract
+  // one so only fully-completed rounds count.
+  function completedRoundsFor(c: ESPNCompetitor): number {
+    const scored = (c.linescores ?? []).filter((ls) => ls.value != null && ls.value > 0).length;
+    return (c.status?.type?.state ?? 'pre') === 'in' ? Math.max(0, scored - 1) : scored;
+  }
+
   // Group by score-to-par so players with the same score always share the same
   // purse split regardless of whether ESPN assigns them identical sortOrders.
-  // Players who haven't teed off yet (state === 'pre') keep their sortOrder-based
-  // position so they don't incorrectly merge into the "E" group.
+  // Players who haven't teed off yet (state === 'pre', completedRounds === 0)
+  // keep their sortOrder-based position so they don't incorrectly merge into the "E" group.
   function getScoreInt(c: ESPNCompetitor): number | null {
-    if ((c.status?.type?.state ?? 'pre') === 'pre') return null;
+    const state = c.status?.type?.state ?? 'pre';
+    // Truly pre-tournament: not scored yet
+    if (state === 'pre' && completedRoundsFor(c) === 0) return null;
     const stat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
     const raw = (stat && stat !== '-') ? stat : (c.score?.displayValue ?? 'E');
     if (!raw || raw === '-' || raw === 'E') return 0;
@@ -157,12 +167,29 @@ export function computeStandings(
 
       if (competitor) {
         const earnings = competitor.earnings ?? 0;
+
+        // --- Completed-rounds detection ---
+        // ESPN resets competitor state to 'pre' and thru to 0 between rounds.
+        // Use linescores (value > 0 = strokes taken for a round) to determine
+        // how many full rounds have been completed.
+        const rawState = competitor.status?.type?.state ?? 'pre';
+        const linescoredCount = (competitor.linescores ?? [])
+          .filter((ls) => ls.value != null && ls.value > 0).length;
+        // For an 'in' player the current (incomplete) round is already in linescores
+        // with a partial value — subtract one so only complete rounds count.
+        const completedRounds = rawState === 'in'
+          ? Math.max(0, linescoredCount - 1)
+          : linescoredCount;
+
         // Position-based projected (used for ranking + payout)
         const projected = isTournamentComplete
           ? earnings
           : (projectedEarnings.get(player.espnId) ?? 0);
+
+        // A player is cut only once the cut has happened (period > 2) and
+        // they didn't earn anything.
         const isCut =
-          competitor.status?.type?.state === 'post' &&
+          (rawState === 'post' || completedRounds >= status.period) &&
           status.period > 2 &&
           earnings === 0;
 
@@ -170,7 +197,7 @@ export function computeStandings(
           ? earnings
           : (oddsResult?.ev.get(player.espnId) ?? projected);
 
-        // scoreToPar stat is the reliable to-par string ("-3", "E", "+1").
+        // scoreToPar stat is the reliable cumulative to-par string ("-3", "E", "+1").
         // score.displayValue is unreliable: "-" for not-yet-started, wrong for active players.
         const scoreToParStat = competitor.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
         const rawScore = scoreToParStat && scoreToParStat !== '-' ? scoreToParStat : (competitor.score?.displayValue ?? 'E');
@@ -188,8 +215,9 @@ export function computeStandings(
           startHole: competitor.status?.startHole ?? 1,
           position: isCut ? 'CUT' : (competitor.status?.position?.displayName ?? '-'),
           thru: competitor.status?.thru ?? 0,
-          state: competitor.status?.type?.state ?? 'pre',
+          state: rawState,
           isCut,
+          completedRounds,
           sortOrder: competitor.sortOrder ?? 999,
           statistics: competitor.statistics ?? [],
           oddsEV: playerEV,
@@ -204,10 +232,12 @@ export function computeStandings(
       return { tier, player, liveData };
     });
 
-    // Sum score-to-par across all picks
+    // Sum score-to-par across all picks.
+    // Include 'pre' players who have completed at least one round — ESPN resets
+    // their state to 'pre' between rounds but their scoreToPar is still valid.
     let totalScoreToPar = 0;
     for (const { liveData } of pickResults) {
-      if (liveData && !liveData.isCut && liveData.state !== 'pre') {
+      if (liveData && !liveData.isCut && (liveData.state !== 'pre' || liveData.completedRounds > 0)) {
         const raw = liveData.scoreDisplay;
         if (raw === 'E') {
           // even par, add 0
