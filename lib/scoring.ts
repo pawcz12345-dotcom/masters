@@ -193,9 +193,14 @@ export function computeStandings(
           status.period > 2 &&
           earnings === 0;
 
+        // When oddsResult is null (API key missing or quota exhausted), use 0 so the
+        // UI shows "—" instead of misleadingly copying the Live Purse value.
+        // When odds exist but a specific player is unmatched, fall back to projected.
         const playerEV = isTournamentComplete
           ? earnings
-          : (oddsResult?.ev.get(player.espnId) ?? projected);
+          : oddsResult
+            ? (oddsResult.ev.get(player.espnId) ?? projected)
+            : 0;
 
         // scoreToPar stat is the reliable cumulative to-par string ("-3", "E", "+1").
         // score.displayValue is unreliable: "-" for not-yet-started, wrong for active players.

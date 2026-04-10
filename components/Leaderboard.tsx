@@ -70,6 +70,8 @@ export default function Leaderboard({ standings, status }: {
 
   const totalPot = standings.length * POOL_BUY_IN;
   const totalParticipants = standings.length;
+  // EV is unavailable when no participant has non-zero oddsEV
+  const oddsAvailable = standings.some((s) => s.oddsEV > 0);
   const cutDay = status.period > 2;
   const tournamentOver = status.state === 'post' && status.period >= 4;
   const cutsLabel = cutDay ? 'Cuts' : 'Projected Cuts';
@@ -208,6 +210,11 @@ export default function Leaderboard({ standings, status }: {
           })}
         </tbody>
       </table>
+      {!oddsAvailable && (
+        <p className="text-[11px] text-masters-ink-4 dark:text-masters-d-ink-4 mt-3 text-center">
+          EV Purse unavailable — odds data not loaded
+        </p>
+      )}
     </div>
   );
 }
