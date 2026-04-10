@@ -255,14 +255,14 @@ export function computeStandings(
           status.period > 2 &&
           earnings === 0;
 
-        // When oddsResult is null (API key missing or quota exhausted), use 0 so the
-        // UI shows "—" instead of misleadingly copying the Live Purse value.
-        // When odds exist but a specific player is unmatched, fall back to projected.
+        // During live play use position-based projected earnings as EV — pre-tournament
+        // odds are a measure of player quality, not current standing.
+        // Pre-tournament: use Harville MC odds EV as a preview; show 0 (—) when no odds.
         const playerEV = isTournamentComplete
           ? earnings
-          : oddsResult
-            ? (oddsResult.ev.get(player.espnId) ?? projected)
-            : 0;
+          : status.state !== 'pre'
+            ? projected
+            : (oddsResult?.ev.get(player.espnId) ?? 0);
 
         // scoreToPar stat is the reliable cumulative to-par string ("-3", "E", "+1").
         // score.displayValue is unreliable: "-" for not-yet-started, wrong for active players.
@@ -355,4 +355,59 @@ export function computeStandings(
   }
 
   return scores;
+}
+
+/**
+ * Compute live-adjusted cut probability and EV for every competitor in the field.
+ * Used to build the evRecord and cutProbRecord passed to the Players tab, which
+ * shows all players (not just picked ones) and would otherwise use raw odds-API
+ * values that ignore current score and holes remaining.
+ */
+export function computeLivePlayerStats(
+  competitors: ESPNCompetitor[],
+  pursePayouts: PurseEntry[],
+  status: ESPNTournamentStatus,
+  oddsResult: OddsResult | null
+): Map<string, { cutProbability: number; oddsEV: number }> {
+  const projected = computeProjectedEarnings(competitors, pursePayouts, status);
+  const isTournamentComplete = status.state === 'post' && status.period >= 4;
+  const cutLine = status.state !== 'pre' ? estimateCutLine(competitors) : 5;
+
+  const result = new Map<string, { cutProbability: number; oddsEV: number }>();
+
+  for (const c of competitors) {
+    const espnId = c.athlete.id;
+    const earnings = c.earnings ?? 0;
+    const rawState = c.status?.type?.state ?? 'pre';
+    const linescoredCount = (c.linescores ?? [])
+      .filter((ls) => ls.value != null && ls.value > 0).length;
+    const completedRounds = rawState === 'in'
+      ? Math.max(0, linescoredCount - 1)
+      : linescoredCount;
+    const thru = c.status?.thru ?? 0;
+
+    const isCut =
+      (rawState === 'post' || completedRounds >= status.period) &&
+      status.period > 2 &&
+      earnings === 0;
+
+    const scoreToParStat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
+    const rawScore = scoreToParStat && scoreToParStat !== '-' ? scoreToParStat : (c.score?.displayValue ?? 'E');
+    const scoreDisplay = rawScore === '-' ? 'E' : rawScore;
+
+    const proj = projected.get(espnId) ?? 0;
+    const ev = isTournamentComplete
+      ? earnings
+      : status.state !== 'pre'
+        ? proj
+        : (oddsResult?.ev.get(espnId) ?? 0);
+
+    const cutProb = status.state === 'pre'
+      ? (oddsResult?.cutProb.get(espnId) ?? 0)
+      : liveCutProbability(scoreDisplay, completedRounds, thru, rawState, status.period, isCut, cutLine);
+
+    result.set(espnId, { cutProbability: cutProb, oddsEV: ev });
+  }
+
+  return result;
 }
