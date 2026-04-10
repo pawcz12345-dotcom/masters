@@ -189,7 +189,21 @@ export async function fetchOddsEV(
         const market = bookmaker.markets.find((m) => m.key === 'outrights');
         if (!market) continue;
 
+        // Detect cap prices: US bookmakers assign the same max-odds placeholder
+        // (e.g. +100000, +500000) to every player below their pricing threshold.
+        // These carry no meaningful probability signal — exclude them so they
+        // don't inflate long-shot implied probabilities after de-vigging.
+        const priceCounts = new Map<number, number>();
+        for (const o of market.outcomes) {
+          priceCounts.set(o.price, (priceCounts.get(o.price) ?? 0) + 1);
+        }
+        const capPrices = new Set(
+          [...priceCounts.entries()].filter(([, n]) => n >= 3).map(([p]) => p)
+        );
+
         for (const outcome of market.outcomes) {
+          if (capPrices.has(outcome.price)) continue; // skip max-cap placeholder odds
+
           const normName = normalizeName(outcome.name);
           const espnId = nameToEspnId.get(normName);
           const id = espnId ?? `_u_${unmatchedIdx++}`;
