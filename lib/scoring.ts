@@ -255,18 +255,15 @@ export function computeStandings(
           status.period > 2 &&
           earnings === 0;
 
-        // Blend odds-API Harville EV with live position-based projected earnings.
-        // oddsWeight = holesRemaining/72: at the start the odds dominate; as more holes
-        // are played the live position takes over. Cut players earn $0.
-        const thru = competitor.status?.thru ?? 0;
-        const holesPlayed = completedRounds * 18 + (rawState === 'in' ? thru : 0);
-        const oddsWeight = Math.max(0, 72 - holesPlayed) / 72;
+        // Use Harville EV from de-vigged live win odds directly — bookmakers
+        // reprice outright winner markets in near-real-time during the tournament.
+        // Cut players earn $0. Without odds (API unavailable) show 0 (→ "—").
         const playerEV = isTournamentComplete
           ? earnings
           : isCut
             ? 0
             : oddsResult
-              ? oddsWeight * (oddsResult.ev.get(player.espnId) ?? projected) + (1 - oddsWeight) * projected
+              ? (oddsResult.ev.get(player.espnId) ?? projected)
               : 0;
 
         // scoreToPar stat is the reliable cumulative to-par string ("-3", "E", "+1").
@@ -401,14 +398,12 @@ export function computeLivePlayerStats(
     const scoreDisplay = rawScore === '-' ? 'E' : rawScore;
 
     const proj = projected.get(espnId) ?? 0;
-    const holesPlayed = completedRounds * 18 + (rawState === 'in' ? thru : 0);
-    const oddsWeight = Math.max(0, 72 - holesPlayed) / 72;
     const ev = isTournamentComplete
       ? earnings
       : isCut
         ? 0
         : oddsResult
-          ? oddsWeight * (oddsResult.ev.get(espnId) ?? proj) + (1 - oddsWeight) * proj
+          ? (oddsResult.ev.get(espnId) ?? proj)
           : 0;
 
     const cutProb = status.state === 'pre'
