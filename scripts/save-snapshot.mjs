@@ -81,8 +81,20 @@ async function main() {
   } else if (status.state === 'post') {
     filename = `r${status.period}.json`;
     allowOverwrite = false; // never overwrite a completed round
+  } else if (status.state === 'in') {
+    // Between rounds: ESPN stays 'in' even after a round finishes.
+    // Detect "Play Complete" in the detail string to know a round just ended.
+    const isPlayComplete = (status.detail ?? '').includes('Play Complete') ||
+                           (status.shortDetail ?? '').includes('Play Complete');
+    if (isPlayComplete && status.period > 0) {
+      filename = `r${status.period}.json`;
+      allowOverwrite = false; // never overwrite a completed round snapshot
+    } else {
+      console.log('Round in progress — skipping snapshot');
+      return;
+    }
   } else {
-    console.log('Round in progress — skipping snapshot');
+    console.log('Unknown state — skipping snapshot');
     return;
   }
 

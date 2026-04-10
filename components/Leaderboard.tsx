@@ -102,8 +102,13 @@ export default function Leaderboard({ standings, status }: {
     alive: s.picks.filter((p) => {
       if (!p.liveData) return false;
       if (p.liveData.isCut) return false;
-      // Before the official cut, only count players currently inside the cut line (top 50)
-      if (!cutDay && p.liveData.state !== 'pre') return (p.liveData.sortOrder ?? 999) <= 50;
+      if (!cutDay) {
+        // Genuinely pre-tournament (nothing has been played yet): everyone is alive
+        if (status.state === 'pre') return true;
+        // During or between rounds: use position. sortOrder reflects the latest standings
+        // so this handles both mid-round and between-round correctly.
+        return (p.liveData.sortOrder ?? 999) <= 50;
+      }
       return true;
     }).length,
     ownership: ownershipByParticipant.get(s.participant.id) ?? 0,

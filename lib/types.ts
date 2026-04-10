@@ -86,6 +86,14 @@ export interface ESPNCompetitor {
     value?: number;
     displayValue: string;
   }>;
+  linescores?: Array<{
+    value?: number;
+    displayValue?: string;
+    period: number;
+    inScore?: number;
+    outScore?: number;
+    teeTime?: string;
+  }>;
 }
 
 export interface ESPNTournamentStatus {

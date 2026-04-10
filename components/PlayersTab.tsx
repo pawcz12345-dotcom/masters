@@ -20,6 +20,7 @@ interface RichPlayer {
   oddsEVDisplay: string;
   cutProbability: number;
   roundScores: Array<{ name: string; displayValue: string }>;
+  linescores: Array<{ value?: number; displayValue?: string; period: number; inScore?: number; outScore?: number }>;
   pickedBy: Array<{ name: string; teamName?: string; slug: string }>;
 }
 
@@ -57,6 +58,7 @@ export default function PlayersTab({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [filterTier, setFilterTier] = useState<string | null>(null);  // tier id or null = all
   const [filterOwned, setFilterOwned] = useState(false);
+  const [scorecardRound, setScorecardRound] = useState<Record<string, number>>({});
 
   function toggleExpand(espnId: string) {
     setExpanded((prev) => {
@@ -118,6 +120,7 @@ export default function PlayersTab({
       const roundScores = (c.statistics ?? []).filter(
         (s) => ROUND_NAMES.has(s.name) && s.displayValue && s.displayValue !== '--'
       );
+      const linescores = (c.linescores ?? []).filter((ls) => ls.value !== undefined);
 
       const scoreToParStat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
       const rawScore = scoreToParStat && scoreToParStat !== '-' ? scoreToParStat : (c.score?.displayValue ?? 'E');
@@ -134,6 +137,7 @@ export default function PlayersTab({
         oddsEV, oddsEVDisplay,
         cutProbability: cutProbRecord[c.athlete.id] ?? 0,
         roundScores,
+        linescores,
         pickedBy: pickedByMap.get(c.athlete.id) ?? [],
       };
     });
@@ -385,66 +389,142 @@ export default function PlayersTab({
                     </td>
                   </tr>
 
-                  {/* Expanded row */}
-                  {isExpanded && (
-                    <tr key={`${p.espnId}-exp`} className={`border-b border-masters-border dark:border-masters-d-border ${inPool ? 'bg-masters-green/5 dark:bg-masters-d-green/5' : 'bg-masters-hover/60 dark:bg-masters-d-hover/60'}`}>
-                      <td colSpan={999} className="px-4 sm:px-0 pb-4 pt-2">
-                        <div className="flex items-center gap-6 flex-wrap">
-                          {(['R1', 'R2', 'R3', 'R4'] as const).map((r) => {
-                            const stat = p.roundScores.find((s) => s.name === r);
-                            return (
-                              <div key={r} className="text-center">
-                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">{r}</p>
-                                <p className="text-sm font-semibold text-masters-ink dark:text-masters-d-ink tabular-nums">
-                                  {stat ? stat.displayValue : <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>}
-                                </p>
-                              </div>
-                            );
-                          })}
+                  {/* Expanded row — scorecard */}
+                  {isExpanded && (() => {
+                    const availableRounds = p.linescores.filter((ls) => ls.value !== undefined);
+                    const defaultRound = availableRounds.length > 0 ? availableRounds[availableRounds.length - 1].period : null;
+                    const selectedPeriod = scorecardRound[p.espnId] ?? defaultRound;
+                    const selectedLs = availableRounds.find((ls) => ls.period === selectedPeriod);
 
-                          {hasCutProb && <div className="h-8 w-px bg-masters-border dark:bg-masters-d-border" />}
+                    return (
+                      <tr key={`${p.espnId}-exp`} className={`border-b border-masters-border dark:border-masters-d-border ${inPool ? 'bg-masters-green/5 dark:bg-masters-d-green/5' : 'bg-masters-hover/60 dark:bg-masters-d-hover/60'}`}>
+                        <td colSpan={999} className="px-4 sm:px-0 pb-4 pt-3">
 
-                          {hasCutProb && (
-                            <div className="flex items-center gap-3">
-                              <div className="text-center">
-                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Make Cut</p>
-                                <p className={`text-sm font-semibold tabular-nums ${cutColorClass(p.cutProbability)}`}>
-                                  {(p.cutProbability * 100).toFixed(1)}%
-                                </p>
+                          {/* Scorecard section */}
+                          {availableRounds.length > 0 ? (
+                            <div className="mb-4">
+                              {/* Round selector tabs */}
+                              <div className="flex gap-1.5 mb-3">
+                                {[1, 2, 3, 4].map((period) => {
+                                  const ls = p.linescores.find((l) => l.period === period && l.value !== undefined);
+                                  if (!ls) return (
+                                    <span key={period} className="px-2.5 py-1 rounded text-xs font-medium text-masters-ink-4 dark:text-masters-d-ink-4 border border-masters-border dark:border-masters-d-border cursor-not-allowed select-none">
+                                      R{period}
+                                    </span>
+                                  );
+                                  const isActive = selectedPeriod === period;
+                                  return (
+                                    <button
+                                      key={period}
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setScorecardRound((prev) => ({ ...prev, [p.espnId]: period })); }}
+                                      className={`px-2.5 py-1 rounded text-xs font-medium transition-colors focus:outline-none ${
+                                        isActive
+                                          ? 'bg-masters-green dark:bg-masters-d-green text-white'
+                                          : 'text-masters-ink-2 dark:text-masters-d-ink-2 border border-masters-border dark:border-masters-d-border hover:bg-masters-hover dark:hover:bg-masters-d-hover'
+                                      }`}
+                                    >
+                                      R{period}
+                                    </button>
+                                  );
+                                })}
                               </div>
-                              <div className="w-24 h-1.5 bg-masters-border dark:bg-masters-d-border rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${
-                                    p.cutProbability >= 0.75 ? 'bg-masters-green dark:bg-masters-d-green' :
-                                    p.cutProbability >= 0.50 ? 'bg-masters-gold dark:bg-masters-d-gold' :
-                                    'bg-masters-red dark:bg-masters-d-red'
-                                  }`}
-                                  style={{ width: `${(p.cutProbability * 100).toFixed(0)}%` }}
-                                />
-                              </div>
-                              <div className="text-center">
-                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Miss Cut</p>
-                                <p className="text-sm font-semibold text-masters-ink-3 dark:text-masters-d-ink-3 tabular-nums">
-                                  {((1 - p.cutProbability) * 100).toFixed(1)}%
-                                </p>
-                              </div>
+
+                              {/* Scorecard table */}
+                              {selectedLs && (
+                                <div className="overflow-x-auto">
+                                  <table className="text-xs border-collapse rounded-lg overflow-hidden">
+                                    <thead>
+                                      <tr className="bg-masters-green dark:bg-masters-d-green text-white">
+                                        <th className="px-3 py-1.5 text-left font-semibold w-16"> </th>
+                                        <th className="px-4 py-1.5 text-center font-semibold">FRONT 9</th>
+                                        <th className="px-4 py-1.5 text-center font-semibold">BACK 9</th>
+                                        <th className="px-4 py-1.5 text-center font-semibold">TOTAL</th>
+                                        <th className="px-4 py-1.5 text-center font-semibold">TO PAR</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr className="bg-masters-green/80 dark:bg-masters-d-green/80 text-white/90">
+                                        <td className="px-3 py-1 text-left font-medium">Par</td>
+                                        <td className="px-4 py-1 text-center tabular-nums">36</td>
+                                        <td className="px-4 py-1 text-center tabular-nums">36</td>
+                                        <td className="px-4 py-1 text-center tabular-nums font-semibold">72</td>
+                                        <td className="px-4 py-1 text-center">—</td>
+                                      </tr>
+                                      <tr className="bg-masters-card dark:bg-masters-d-card border-t border-masters-border dark:border-masters-d-border">
+                                        <td className="px-3 py-1.5 text-left font-semibold text-masters-ink dark:text-masters-d-ink">R{selectedLs.period}</td>
+                                        <td className="px-4 py-1.5 text-center tabular-nums text-masters-ink-2 dark:text-masters-d-ink-2">
+                                          {selectedLs.outScore ?? '—'}
+                                        </td>
+                                        <td className="px-4 py-1.5 text-center tabular-nums text-masters-ink-2 dark:text-masters-d-ink-2">
+                                          {selectedLs.inScore ?? '—'}
+                                        </td>
+                                        <td className="px-4 py-1.5 text-center tabular-nums font-semibold text-masters-ink dark:text-masters-d-ink">
+                                          {selectedLs.value != null ? Math.round(selectedLs.value) : '—'}
+                                        </td>
+                                        <td className={`px-4 py-1.5 text-center tabular-nums font-semibold ${
+                                          selectedLs.displayValue && selectedLs.displayValue.startsWith('-')
+                                            ? 'text-masters-red dark:text-masters-d-red'
+                                            : selectedLs.displayValue === 'E'
+                                            ? 'text-masters-ink dark:text-masters-d-ink'
+                                            : 'text-masters-ink-3 dark:text-masters-d-ink-3'
+                                        }`}>
+                                          {selectedLs.displayValue ?? '—'}
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
                             </div>
+                          ) : (
+                            <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4 mb-4">No round data yet</p>
                           )}
 
-                          {p.oddsEV > 0 && (
-                            <>
-                              <div className="h-8 w-px bg-masters-border dark:bg-masters-d-border" />
-                              <div className="text-center">
-                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">EV $</p>
-                                <p className="text-sm font-semibold text-masters-gold dark:text-masters-d-gold tabular-nums">{p.oddsEVDisplay}</p>
+                          {/* Cut probability + EV */}
+                          <div className="flex items-center gap-6 flex-wrap">
+                            {hasCutProb && (
+                              <div className="flex items-center gap-3">
+                                <div className="text-center">
+                                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Make Cut</p>
+                                  <p className={`text-sm font-semibold tabular-nums ${cutColorClass(p.cutProbability)}`}>
+                                    {(p.cutProbability * 100).toFixed(1)}%
+                                  </p>
+                                </div>
+                                <div className="w-24 h-1.5 bg-masters-border dark:bg-masters-d-border rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${
+                                      p.cutProbability >= 0.75 ? 'bg-masters-green dark:bg-masters-d-green' :
+                                      p.cutProbability >= 0.50 ? 'bg-masters-gold dark:bg-masters-d-gold' :
+                                      'bg-masters-red dark:bg-masters-d-red'
+                                    }`}
+                                    style={{ width: `${(p.cutProbability * 100).toFixed(0)}%` }}
+                                  />
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Miss Cut</p>
+                                  <p className="text-sm font-semibold text-masters-ink-3 dark:text-masters-d-ink-3 tabular-nums">
+                                    {((1 - p.cutProbability) * 100).toFixed(1)}%
+                                  </p>
+                                </div>
                               </div>
-                            </>
-                          )}
+                            )}
 
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                            {p.oddsEV > 0 && (
+                              <>
+                                {hasCutProb && <div className="h-8 w-px bg-masters-border dark:bg-masters-d-border" />}
+                                <div className="text-center">
+                                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">EV $</p>
+                                  <p className="text-sm font-semibold text-masters-gold dark:text-masters-d-gold tabular-nums">{p.oddsEVDisplay}</p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                        </td>
+                      </tr>
+                    );
+                  })()}
                 </>
               );
             })}
