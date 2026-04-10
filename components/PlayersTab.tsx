@@ -1,8 +1,232 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { ESPNCompetitor, ESPNTournamentStatus, ParticipantScore, Tier, Player } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+
+// --- Scorecard types ---
+interface HoleScore {
+  period: number;   // hole number 1–18
+  value: number;
+  displayValue: string;
+  par: number;
+  scoreType: { name: string };
+}
+
+interface ScorecardRound {
+  period: number;   // round number 1–4
+  value: number | null;
+  displayValue: string | null;
+  outScore?: number;
+  inScore?: number;
+  holes: HoleScore[];
+}
+
+// --- Hole score cell with golf markings ---
+function HoleCell({ hole }: { hole: HoleScore | undefined }) {
+  if (!hole) {
+    return <span className="text-masters-ink-4 dark:text-masters-d-ink-4">—</span>;
+  }
+
+  const type = hole.scoreType.name;
+  const relToPar = hole.value - hole.par;
+  const label = hole.displayValue;
+
+  // Under par → red; over par → dark ink; even → default
+  const textColor =
+    relToPar < 0 ? 'text-masters-red dark:text-masters-d-red' :
+    relToPar > 0 ? 'text-masters-ink dark:text-masters-d-ink' :
+    'text-masters-ink-2 dark:text-masters-d-ink-2';
+
+  const base = `inline-flex items-center justify-center w-6 h-6 text-[11px] font-semibold tabular-nums ${textColor}`;
+
+  if (type === 'EAGLE' || type === 'DOUBLE_EAGLE' || type === 'ALBATROSS') {
+    return (
+      <span className={`${base} rounded-full border-2 border-masters-red dark:border-masters-d-red`}
+        style={{ boxShadow: '0 0 0 2px var(--color-masters-red, #b91c1c), 0 0 0 4px transparent, 0 0 0 5px var(--color-masters-red, #b91c1c)' }}
+        title={type.replace(/_/g, ' ')}>
+        {label}
+      </span>
+    );
+  }
+  if (type === 'BIRDIE') {
+    return (
+      <span className={`${base} rounded-full border-2 border-masters-red dark:border-masters-d-red`} title="Birdie">
+        {label}
+      </span>
+    );
+  }
+  if (type === 'DOUBLE_BOGEY') {
+    return (
+      <span className={`${base} border-2 border-masters-ink dark:border-masters-d-ink`}
+        style={{ outline: '2px solid', outlineOffset: '2px', outlineColor: 'currentColor' }}
+        title="Double Bogey">
+        {label}
+      </span>
+    );
+  }
+  if (type === 'BOGEY') {
+    return (
+      <span className={`${base} border-2 border-masters-ink dark:border-masters-d-ink`} title="Bogey">
+        {label}
+      </span>
+    );
+  }
+  if (type === 'TRIPLE_BOGEY' || relToPar >= 3) {
+    return (
+      <span className={`${base} border-2 border-masters-ink dark:border-masters-d-ink`}
+        style={{ outline: '2px solid', outlineOffset: '3px', outlineColor: 'currentColor', outlineStyle: 'double' }}
+        title={type.replace(/_/g, ' ')}>
+        {label}
+      </span>
+    );
+  }
+  // PAR
+  return <span className={`${base}`}>{label}</span>;
+}
+
+function Scorecard({ rounds }: { rounds: ScorecardRound[] }) {
+  const playedRounds = rounds.filter((r) => r.value !== null && r.holes.length > 0);
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(
+    playedRounds.length > 0 ? playedRounds[playedRounds.length - 1].period : 1
+  );
+
+  const round = playedRounds.find((r) => r.period === selectedPeriod) ?? playedRounds[0];
+  if (!round) return <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4">No round data</p>;
+
+  const front = round.holes.filter((h) => h.period <= 9);
+  const back = round.holes.filter((h) => h.period > 9);
+  const frontPar = front.reduce((s, h) => s + h.par, 0);
+  const backPar = back.reduce((s, h) => s + h.par, 0);
+  const frontScore = front.reduce((s, h) => s + h.value, 0);
+  const backScore = back.reduce((s, h) => s + h.value, 0);
+
+  const scoreToPar = (score: number, par: number) => {
+    const diff = score - par;
+    if (diff === 0) return 'E';
+    return diff > 0 ? `+${diff}` : `${diff}`;
+  };
+  const toParColor = (score: number, par: number) => {
+    const diff = score - par;
+    return diff < 0 ? 'text-masters-red dark:text-masters-d-red' :
+           diff > 0 ? 'text-masters-ink-3 dark:text-masters-d-ink-3' :
+           'text-masters-ink dark:text-masters-d-ink';
+  };
+
+  const holeHeaderClass = 'text-center text-[10px] font-semibold text-white/80 px-1.5 py-1.5 min-w-[28px]';
+  const subtotalHeaderClass = 'text-center text-[10px] font-bold text-white px-2 py-1.5 min-w-[36px] bg-masters-green/60 dark:bg-masters-d-green/60';
+  const parCellClass = 'text-center text-[11px] text-masters-ink-2 dark:text-masters-d-ink-2 px-1 py-1';
+  const subtotalParClass = 'text-center text-[11px] font-semibold text-masters-ink dark:text-masters-d-ink px-2 py-1 bg-masters-hover dark:bg-masters-d-hover';
+  const scoreCellClass = 'text-center px-1 py-1.5';
+  const subtotalScoreClass = 'text-center px-2 py-1.5 bg-masters-hover dark:bg-masters-d-hover';
+
+  return (
+    <div>
+      {/* Round tabs */}
+      <div className="flex gap-1.5 mb-3">
+        {[1, 2, 3, 4].map((period) => {
+          const r = rounds.find((x) => x.period === period);
+          const available = r && r.value !== null && r.holes.length > 0;
+          if (!available) {
+            return (
+              <span key={period} className="px-2.5 py-1 rounded text-xs font-medium text-masters-ink-4 dark:text-masters-d-ink-4 border border-masters-border dark:border-masters-d-border cursor-not-allowed select-none">
+                R{period}
+              </span>
+            );
+          }
+          const isActive = selectedPeriod === period;
+          return (
+            <button key={period} type="button"
+              onClick={() => setSelectedPeriod(period)}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors focus:outline-none ${
+                isActive
+                  ? 'bg-masters-green dark:bg-masters-d-green text-white'
+                  : 'text-masters-ink-2 dark:text-masters-d-ink-2 border border-masters-border dark:border-masters-d-border hover:bg-masters-hover dark:hover:bg-masters-d-hover'
+              }`}>
+              R{period}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Scorecard table */}
+      <div className="overflow-x-auto">
+        <table className="border-collapse text-xs" style={{ minWidth: 'max-content' }}>
+          <thead>
+            <tr className="bg-masters-green dark:bg-masters-d-green">
+              <th className="text-left text-[10px] font-semibold text-white/80 px-2 py-1.5 min-w-[40px]">Hole</th>
+              {[1,2,3,4,5,6,7,8,9].map((h) => <th key={h} className={holeHeaderClass}>{h}</th>)}
+              <th className={subtotalHeaderClass}>OUT</th>
+              {[10,11,12,13,14,15,16,17,18].map((h) => <th key={h} className={holeHeaderClass}>{h}</th>)}
+              <th className={subtotalHeaderClass}>IN</th>
+              <th className={subtotalHeaderClass}>TOT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Par row */}
+            <tr className="border-b border-masters-border/50 dark:border-masters-d-border/50 bg-masters-green/10 dark:bg-masters-d-green/10">
+              <td className="text-left text-[11px] font-semibold text-masters-ink dark:text-masters-d-ink px-2 py-1">Par</td>
+              {front.map((h) => <td key={h.period} className={parCellClass}>{h.par}</td>)}
+              {front.length < 9 && Array.from({ length: 9 - front.length }).map((_, i) => <td key={`fp${i}`} className={parCellClass}>—</td>)}
+              <td className={subtotalParClass}>{frontPar}</td>
+              {back.map((h) => <td key={h.period} className={parCellClass}>{h.par}</td>)}
+              {back.length < 9 && Array.from({ length: 9 - back.length }).map((_, i) => <td key={`bp${i}`} className={parCellClass}>—</td>)}
+              <td className={subtotalParClass}>{backPar}</td>
+              <td className={subtotalParClass}>{frontPar + backPar}</td>
+            </tr>
+
+            {/* Score row */}
+            <tr className="bg-masters-card dark:bg-masters-d-card">
+              <td className="text-left text-[11px] font-semibold text-masters-ink dark:text-masters-d-ink px-2 py-1.5">R{round.period}</td>
+              {[...Array(9)].map((_, i) => (
+                <td key={i} className={scoreCellClass}>
+                  <div className="flex justify-center">
+                    <HoleCell hole={front[i]} />
+                  </div>
+                </td>
+              ))}
+              <td className={subtotalScoreClass}>
+                <div className="flex flex-col items-center">
+                  <span className="font-semibold text-masters-ink dark:text-masters-d-ink tabular-nums">{frontScore || '—'}</span>
+                  <span className={`text-[9px] tabular-nums ${front.length > 0 ? toParColor(frontScore, frontPar) : ''}`}>
+                    {front.length > 0 ? scoreToPar(frontScore, frontPar) : ''}
+                  </span>
+                </div>
+              </td>
+              {[...Array(9)].map((_, i) => (
+                <td key={i} className={scoreCellClass}>
+                  <div className="flex justify-center">
+                    <HoleCell hole={back[i]} />
+                  </div>
+                </td>
+              ))}
+              <td className={subtotalScoreClass}>
+                <div className="flex flex-col items-center">
+                  <span className="font-semibold text-masters-ink dark:text-masters-d-ink tabular-nums">{backScore || '—'}</span>
+                  <span className={`text-[9px] tabular-nums ${back.length > 0 ? toParColor(backScore, backPar) : ''}`}>
+                    {back.length > 0 ? scoreToPar(backScore, backPar) : ''}
+                  </span>
+                </div>
+              </td>
+              <td className={subtotalScoreClass}>
+                <div className="flex flex-col items-center">
+                  <span className="font-bold text-masters-ink dark:text-masters-d-ink tabular-nums">{round.value != null ? Math.round(round.value) : '—'}</span>
+                  <span className={`text-[9px] tabular-nums ${round.displayValue ? (
+                    round.displayValue.startsWith('-') ? 'text-masters-red dark:text-masters-d-red' :
+                    round.displayValue === 'E' ? 'text-masters-ink dark:text-masters-d-ink' :
+                    'text-masters-ink-3 dark:text-masters-d-ink-3'
+                  ) : ''}`}>
+                    {round.displayValue ?? ''}
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 interface RichPlayer {
   espnId: string;
@@ -19,8 +243,6 @@ interface RichPlayer {
   oddsEV: number;
   oddsEVDisplay: string;
   cutProbability: number;
-  roundScores: Array<{ name: string; displayValue: string }>;
-  linescores: Array<{ value?: number; displayValue?: string; period: number; inScore?: number; outScore?: number }>;
   pickedBy: Array<{ name: string; teamName?: string; slug: string }>;
 }
 
@@ -58,12 +280,51 @@ export default function PlayersTab({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [filterTier, setFilterTier] = useState<string | null>(null);  // tier id or null = all
   const [filterOwned, setFilterOwned] = useState(false);
-  const [scorecardRound, setScorecardRound] = useState<Record<string, number>>({});
+  const [scorecardCache, setScorecardCache] = useState<Record<string, ScorecardRound[]>>({});
+  const [scorecardLoading, setScorecardLoading] = useState<Set<string>>(new Set());
+
+  const fetchScorecard = useCallback(async (espnId: string) => {
+    if (scorecardCache[espnId] || scorecardLoading.has(espnId)) return;
+    setScorecardLoading((prev) => new Set(prev).add(espnId));
+    try {
+      const res = await fetch(`/api/scorecard/${espnId}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      const rounds: ScorecardRound[] = (data.items ?? []).map((item: {
+        period: number; value?: number; displayValue?: string;
+        outScore?: number; inScore?: number;
+        linescores?: Array<{ period: number; value: number; displayValue: string; par: number; scoreType: { name: string } }>;
+      }) => ({
+        period: item.period,
+        value: item.value ?? null,
+        displayValue: item.displayValue ?? null,
+        outScore: item.outScore,
+        inScore: item.inScore,
+        holes: (item.linescores ?? []).map((h) => ({
+          period: h.period,
+          value: h.value,
+          displayValue: h.displayValue,
+          par: h.par,
+          scoreType: h.scoreType,
+        })),
+      }));
+      setScorecardCache((prev) => ({ ...prev, [espnId]: rounds }));
+    } catch {
+      setScorecardCache((prev) => ({ ...prev, [espnId]: [] }));
+    } finally {
+      setScorecardLoading((prev) => { const s = new Set(prev); s.delete(espnId); return s; });
+    }
+  }, [scorecardCache, scorecardLoading]);
 
   function toggleExpand(espnId: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(espnId)) next.delete(espnId); else next.add(espnId);
+      if (next.has(espnId)) {
+        next.delete(espnId);
+      } else {
+        next.add(espnId);
+        fetchScorecard(espnId);
+      }
       return next;
     });
   }
@@ -116,11 +377,6 @@ export default function PlayersTab({
         }
       }
 
-      const ROUND_NAMES = new Set(['R1', 'R2', 'R3', 'R4']);
-      const roundScores = (c.statistics ?? []).filter(
-        (s) => ROUND_NAMES.has(s.name) && s.displayValue && s.displayValue !== '--'
-      );
-      const linescores = (c.linescores ?? []).filter((ls) => ls.value !== undefined);
 
       const scoreToParStat = c.statistics?.find((s) => s.name === 'scoreToPar')?.displayValue;
       const rawScore = scoreToParStat && scoreToParStat !== '-' ? scoreToParStat : (c.score?.displayValue ?? 'E');
@@ -136,8 +392,6 @@ export default function PlayersTab({
         isCut, projectedEarnings, projectedEarningsDisplay,
         oddsEV, oddsEVDisplay,
         cutProbability: cutProbRecord[c.athlete.id] ?? 0,
-        roundScores,
-        linescores,
         pickedBy: pickedByMap.get(c.athlete.id) ?? [],
       };
     });
@@ -390,141 +644,64 @@ export default function PlayersTab({
                   </tr>
 
                   {/* Expanded row — scorecard */}
-                  {isExpanded && (() => {
-                    const availableRounds = p.linescores.filter((ls) => ls.value !== undefined);
-                    const defaultRound = availableRounds.length > 0 ? availableRounds[availableRounds.length - 1].period : null;
-                    const selectedPeriod = scorecardRound[p.espnId] ?? defaultRound;
-                    const selectedLs = availableRounds.find((ls) => ls.period === selectedPeriod);
+                  {isExpanded && (
+                    <tr key={`${p.espnId}-exp`} className={`border-b border-masters-border dark:border-masters-d-border ${inPool ? 'bg-masters-green/5 dark:bg-masters-d-green/5' : 'bg-masters-hover/60 dark:bg-masters-d-hover/60'}`}>
+                      <td colSpan={999} className="px-4 sm:px-0 pb-4 pt-3">
 
-                    return (
-                      <tr key={`${p.espnId}-exp`} className={`border-b border-masters-border dark:border-masters-d-border ${inPool ? 'bg-masters-green/5 dark:bg-masters-d-green/5' : 'bg-masters-hover/60 dark:bg-masters-d-hover/60'}`}>
-                        <td colSpan={999} className="px-4 sm:px-0 pb-4 pt-3">
-
-                          {/* Scorecard section */}
-                          {availableRounds.length > 0 ? (
-                            <div className="mb-4">
-                              {/* Round selector tabs */}
-                              <div className="flex gap-1.5 mb-3">
-                                {[1, 2, 3, 4].map((period) => {
-                                  const ls = p.linescores.find((l) => l.period === period && l.value !== undefined);
-                                  if (!ls) return (
-                                    <span key={period} className="px-2.5 py-1 rounded text-xs font-medium text-masters-ink-4 dark:text-masters-d-ink-4 border border-masters-border dark:border-masters-d-border cursor-not-allowed select-none">
-                                      R{period}
-                                    </span>
-                                  );
-                                  const isActive = selectedPeriod === period;
-                                  return (
-                                    <button
-                                      key={period}
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); setScorecardRound((prev) => ({ ...prev, [p.espnId]: period })); }}
-                                      className={`px-2.5 py-1 rounded text-xs font-medium transition-colors focus:outline-none ${
-                                        isActive
-                                          ? 'bg-masters-green dark:bg-masters-d-green text-white'
-                                          : 'text-masters-ink-2 dark:text-masters-d-ink-2 border border-masters-border dark:border-masters-d-border hover:bg-masters-hover dark:hover:bg-masters-d-hover'
-                                      }`}
-                                    >
-                                      R{period}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Scorecard table */}
-                              {selectedLs && (
-                                <div className="overflow-x-auto">
-                                  <table className="text-xs border-collapse rounded-lg overflow-hidden">
-                                    <thead>
-                                      <tr className="bg-masters-green dark:bg-masters-d-green text-white">
-                                        <th className="px-3 py-1.5 text-left font-semibold w-16"> </th>
-                                        <th className="px-4 py-1.5 text-center font-semibold">FRONT 9</th>
-                                        <th className="px-4 py-1.5 text-center font-semibold">BACK 9</th>
-                                        <th className="px-4 py-1.5 text-center font-semibold">TOTAL</th>
-                                        <th className="px-4 py-1.5 text-center font-semibold">TO PAR</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr className="bg-masters-green/80 dark:bg-masters-d-green/80 text-white/90">
-                                        <td className="px-3 py-1 text-left font-medium">Par</td>
-                                        <td className="px-4 py-1 text-center tabular-nums">36</td>
-                                        <td className="px-4 py-1 text-center tabular-nums">36</td>
-                                        <td className="px-4 py-1 text-center tabular-nums font-semibold">72</td>
-                                        <td className="px-4 py-1 text-center">—</td>
-                                      </tr>
-                                      <tr className="bg-masters-card dark:bg-masters-d-card border-t border-masters-border dark:border-masters-d-border">
-                                        <td className="px-3 py-1.5 text-left font-semibold text-masters-ink dark:text-masters-d-ink">R{selectedLs.period}</td>
-                                        <td className="px-4 py-1.5 text-center tabular-nums text-masters-ink-2 dark:text-masters-d-ink-2">
-                                          {selectedLs.outScore ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-1.5 text-center tabular-nums text-masters-ink-2 dark:text-masters-d-ink-2">
-                                          {selectedLs.inScore ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-1.5 text-center tabular-nums font-semibold text-masters-ink dark:text-masters-d-ink">
-                                          {selectedLs.value != null ? Math.round(selectedLs.value) : '—'}
-                                        </td>
-                                        <td className={`px-4 py-1.5 text-center tabular-nums font-semibold ${
-                                          selectedLs.displayValue && selectedLs.displayValue.startsWith('-')
-                                            ? 'text-masters-red dark:text-masters-d-red'
-                                            : selectedLs.displayValue === 'E'
-                                            ? 'text-masters-ink dark:text-masters-d-ink'
-                                            : 'text-masters-ink-3 dark:text-masters-d-ink-3'
-                                        }`}>
-                                          {selectedLs.displayValue ?? '—'}
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </div>
-                              )}
-                            </div>
+                        {/* Hole-by-hole scorecard */}
+                        <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+                          {scorecardLoading.has(p.espnId) ? (
+                            <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4">Loading scorecard…</p>
+                          ) : scorecardCache[p.espnId] ? (
+                            <Scorecard rounds={scorecardCache[p.espnId]} />
                           ) : (
-                            <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4 mb-4">No round data yet</p>
+                            <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4">No scorecard available</p>
+                          )}
+                        </div>
+
+                        {/* Cut probability + EV */}
+                        <div className="flex items-center gap-6 flex-wrap">
+                          {hasCutProb && (
+                            <div className="flex items-center gap-3">
+                              <div className="text-center">
+                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Make Cut</p>
+                                <p className={`text-sm font-semibold tabular-nums ${cutColorClass(p.cutProbability)}`}>
+                                  {(p.cutProbability * 100).toFixed(1)}%
+                                </p>
+                              </div>
+                              <div className="w-24 h-1.5 bg-masters-border dark:bg-masters-d-border rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    p.cutProbability >= 0.75 ? 'bg-masters-green dark:bg-masters-d-green' :
+                                    p.cutProbability >= 0.50 ? 'bg-masters-gold dark:bg-masters-d-gold' :
+                                    'bg-masters-red dark:bg-masters-d-red'
+                                  }`}
+                                  style={{ width: `${(p.cutProbability * 100).toFixed(0)}%` }}
+                                />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Miss Cut</p>
+                                <p className="text-sm font-semibold text-masters-ink-3 dark:text-masters-d-ink-3 tabular-nums">
+                                  {((1 - p.cutProbability) * 100).toFixed(1)}%
+                                </p>
+                              </div>
+                            </div>
                           )}
 
-                          {/* Cut probability + EV */}
-                          <div className="flex items-center gap-6 flex-wrap">
-                            {hasCutProb && (
-                              <div className="flex items-center gap-3">
-                                <div className="text-center">
-                                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Make Cut</p>
-                                  <p className={`text-sm font-semibold tabular-nums ${cutColorClass(p.cutProbability)}`}>
-                                    {(p.cutProbability * 100).toFixed(1)}%
-                                  </p>
-                                </div>
-                                <div className="w-24 h-1.5 bg-masters-border dark:bg-masters-d-border rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${
-                                      p.cutProbability >= 0.75 ? 'bg-masters-green dark:bg-masters-d-green' :
-                                      p.cutProbability >= 0.50 ? 'bg-masters-gold dark:bg-masters-d-gold' :
-                                      'bg-masters-red dark:bg-masters-d-red'
-                                    }`}
-                                    style={{ width: `${(p.cutProbability * 100).toFixed(0)}%` }}
-                                  />
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">Miss Cut</p>
-                                  <p className="text-sm font-semibold text-masters-ink-3 dark:text-masters-d-ink-3 tabular-nums">
-                                    {((1 - p.cutProbability) * 100).toFixed(1)}%
-                                  </p>
-                                </div>
+                          {p.oddsEV > 0 && (
+                            <>
+                              {hasCutProb && <div className="h-8 w-px bg-masters-border dark:bg-masters-d-border" />}
+                              <div className="text-center">
+                                <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">EV $</p>
+                                <p className="text-sm font-semibold text-masters-gold dark:text-masters-d-gold tabular-nums">{p.oddsEVDisplay}</p>
                               </div>
-                            )}
+                            </>
+                          )}
+                        </div>
 
-                            {p.oddsEV > 0 && (
-                              <>
-                                {hasCutProb && <div className="h-8 w-px bg-masters-border dark:bg-masters-d-border" />}
-                                <div className="text-center">
-                                  <p className="text-[10px] text-masters-ink-3 dark:text-masters-d-ink-3 uppercase tracking-wider mb-0.5">EV $</p>
-                                  <p className="text-sm font-semibold text-masters-gold dark:text-masters-d-gold tabular-nums">{p.oddsEVDisplay}</p>
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                        </td>
-                      </tr>
-                    );
-                  })()}
+                      </td>
+                    </tr>
+                  )}
                 </>
               );
             })}
