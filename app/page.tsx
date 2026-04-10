@@ -100,7 +100,7 @@ export default async function Home() {
               </h1>
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                 {espn.status.state !== 'pre' && <TournamentStatus status={espn.status} />}
-                <LastUpdated lastFetched={espn.lastFetched} />
+                <LastUpdated />
               </div>
             </div>
           </div>

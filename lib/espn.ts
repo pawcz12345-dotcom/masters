@@ -9,7 +9,6 @@ export interface ESPNLeaderboardData {
   competitors: ESPNCompetitor[];
   tournamentName: string;
   status: ESPNTournamentStatus;
-  lastFetched: string;
 }
 
 // In-memory fallback — persists across requests in the same serverless instance
@@ -45,7 +44,6 @@ export async function fetchESPNLeaderboard(): Promise<ESPNLeaderboardData> {
         detail: competition.status?.type?.detail ?? '',
         shortDetail: competition.status?.type?.shortDetail ?? '',
       },
-      lastFetched: new Date().toISOString(),
     };
 
     lastSuccessfulData = result;
@@ -55,12 +53,10 @@ export async function fetchESPNLeaderboard(): Promise<ESPNLeaderboardData> {
     if (lastSuccessfulData) {
       return lastSuccessfulData;
     }
-    // Return empty pre-tournament state as last resort
     return {
       competitors: [],
       tournamentName: 'Masters Tournament 2026',
       status: { state: 'pre', period: 0, detail: '', shortDetail: '' },
-      lastFetched: new Date().toISOString(),
     };
   }
 }
