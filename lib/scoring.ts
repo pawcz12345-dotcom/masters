@@ -255,14 +255,19 @@ export function computeStandings(
           status.period > 2 &&
           earnings === 0;
 
-        // During live play use position-based projected earnings as EV — pre-tournament
-        // odds are a measure of player quality, not current standing.
-        // Pre-tournament: use Harville MC odds EV as a preview; show 0 (—) when no odds.
+        // Blend odds-API Harville EV with live position-based projected earnings.
+        // oddsWeight = holesRemaining/72: at the start the odds dominate; as more holes
+        // are played the live position takes over. Cut players earn $0.
+        const thru = competitor.status?.thru ?? 0;
+        const holesPlayed = completedRounds * 18 + (rawState === 'in' ? thru : 0);
+        const oddsWeight = Math.max(0, 72 - holesPlayed) / 72;
         const playerEV = isTournamentComplete
           ? earnings
-          : status.state !== 'pre'
-            ? projected
-            : (oddsResult?.ev.get(player.espnId) ?? 0);
+          : isCut
+            ? 0
+            : oddsResult
+              ? oddsWeight * (oddsResult.ev.get(player.espnId) ?? projected) + (1 - oddsWeight) * projected
+              : 0;
 
         // scoreToPar stat is the reliable cumulative to-par string ("-3", "E", "+1").
         // score.displayValue is unreliable: "-" for not-yet-started, wrong for active players.
@@ -396,11 +401,15 @@ export function computeLivePlayerStats(
     const scoreDisplay = rawScore === '-' ? 'E' : rawScore;
 
     const proj = projected.get(espnId) ?? 0;
+    const holesPlayed = completedRounds * 18 + (rawState === 'in' ? thru : 0);
+    const oddsWeight = Math.max(0, 72 - holesPlayed) / 72;
     const ev = isTournamentComplete
       ? earnings
-      : status.state !== 'pre'
-        ? proj
-        : (oddsResult?.ev.get(espnId) ?? 0);
+      : isCut
+        ? 0
+        : oddsResult
+          ? oddsWeight * (oddsResult.ev.get(espnId) ?? proj) + (1 - oddsWeight) * proj
+          : 0;
 
     const cutProb = status.state === 'pre'
       ? (oddsResult?.cutProb.get(espnId) ?? 0)
