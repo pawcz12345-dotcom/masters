@@ -249,9 +249,14 @@ export function computeStandings(
           : (projectedEarnings.get(player.espnId) ?? 0);
 
         // A player is cut only once the cut has happened (period > 2) and
-        // they didn't earn anything.
+        // they didn't earn anything AND they completed fewer rounds than the
+        // current period (i.e. they stopped before the current round started).
+        // Checking completedRounds < status.period prevents R3/R4 finishers
+        // (rawState='post', completedRounds===period, earnings still 0) from
+        // being incorrectly flagged as cut.
         const isCut =
-          (rawState === 'post' || completedRounds >= status.period) &&
+          rawState === 'post' &&
+          completedRounds < status.period &&
           status.period > 2 &&
           earnings === 0;
 
@@ -389,7 +394,8 @@ export function computeLivePlayerStats(
     const thru = c.status?.thru ?? 0;
 
     const isCut =
-      (rawState === 'post' || completedRounds >= status.period) &&
+      rawState === 'post' &&
+      completedRounds < status.period &&
       status.period > 2 &&
       earnings === 0;
 
