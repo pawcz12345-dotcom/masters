@@ -311,9 +311,11 @@ export function computeStandings(
     // Sum score-to-par across all picks.
     // Include 'pre' players who have completed at least one round — ESPN resets
     // their state to 'pre' between rounds but their scoreToPar is still valid.
+    // Cut players still contributed their R1+R2 scores, so include them too;
+    // isCut only affects display/earnings, not the team's cumulative score.
     let totalScoreToPar = 0;
     for (const { liveData } of pickResults) {
-      if (liveData && !liveData.isCut && (liveData.state !== 'pre' || liveData.completedRounds > 0)) {
+      if (liveData && (liveData.state !== 'pre' || liveData.completedRounds > 0)) {
         const raw = liveData.scoreDisplay;
         if (raw === 'E') {
           // even par, add 0
