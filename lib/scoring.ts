@@ -262,11 +262,12 @@ export function computeStandings(
 
         // Use Harville EV from de-vigged live win odds directly — bookmakers
         // reprice outright winner markets in near-real-time during the tournament.
-        // Cut players earn $0. Without odds (API unavailable) show 0 (→ "—").
+        // Cut players earn the flat cut payment (reflected in `projected`).
+        // Without odds (API unavailable) show 0 (→ "—").
         const playerEV = isTournamentComplete
           ? earnings
           : isCut
-            ? 0
+            ? projected
             : oddsResult
               ? (oddsResult.ev.get(player.espnId) ?? projected)
               : 0;
@@ -409,7 +410,7 @@ export function computeLivePlayerStats(
     const ev = isTournamentComplete
       ? earnings
       : isCut
-        ? 0
+        ? proj
         : oddsResult
           ? (oddsResult.ev.get(espnId) ?? proj)
           : 0;
