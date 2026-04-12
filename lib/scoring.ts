@@ -119,10 +119,28 @@ export function computeProjectedEarnings(
     return isNaN(n) ? 0 : n;
   }
 
+  // Assign cut players a flat $25k payment and exclude them from the
+  // score-based ranking. Without this, a cut player at E after 2 rounds
+  // would rank above survivors who ended at +3 after 4 rounds, receiving
+  // a position-based payout far higher than the actual cut payment.
+  const CUT_PAYMENT = 25000;
+  const cutPlayerIds = new Set<string>();
+  if (status.period > 2) {
+    for (const c of competitors) {
+      const rawState = c.status?.type?.state ?? 'pre';
+      const earnings = c.earnings ?? 0;
+      if (rawState === 'post' && earnings === 0 && completedRoundsFor(c) <= 2) {
+        projected.set(c.athlete.id, CUT_PAYMENT);
+        cutPlayerIds.add(c.athlete.id);
+      }
+    }
+  }
+
   // Separate players into "scored" (teed off) and "not started"
   const scoredPlayers: ESPNCompetitor[] = [];
   const notStarted: ESPNCompetitor[] = [];
   for (const c of competitors) {
+    if (cutPlayerIds.has(c.athlete.id)) continue; // already handled above
     if (getScoreInt(c) === null) notStarted.push(c);
     else scoredPlayers.push(c);
   }
