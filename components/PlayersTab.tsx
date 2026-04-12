@@ -284,7 +284,7 @@ export default function PlayersTab({
   const [scorecardLoading, setScorecardLoading] = useState<Set<string>>(new Set());
 
   const fetchScorecard = useCallback(async (espnId: string) => {
-    if (scorecardCache[espnId] || scorecardLoading.has(espnId)) return;
+    if (scorecardLoading.has(espnId)) return;
     setScorecardLoading((prev) => new Set(prev).add(espnId));
     try {
       const res = await fetch(`/api/scorecard/${espnId}`);
@@ -314,7 +314,7 @@ export default function PlayersTab({
     } finally {
       setScorecardLoading((prev) => { const s = new Set(prev); s.delete(espnId); return s; });
     }
-  }, [scorecardCache, scorecardLoading]);
+  }, [scorecardLoading]);
 
   function toggleExpand(espnId: string) {
     setExpanded((prev) => {
@@ -650,10 +650,13 @@ export default function PlayersTab({
 
                         {/* Hole-by-hole scorecard */}
                         <div className="mb-4" onClick={(e) => e.stopPropagation()}>
-                          {scorecardLoading.has(p.espnId) ? (
+                          {scorecardCache[p.espnId] ? (
+                            <Scorecard
+                              key={`${p.espnId}-${scorecardCache[p.espnId].filter(r => r.value !== null && r.holes.length > 0).length}`}
+                              rounds={scorecardCache[p.espnId]}
+                            />
+                          ) : scorecardLoading.has(p.espnId) ? (
                             <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4">Loading scorecard…</p>
-                          ) : scorecardCache[p.espnId] ? (
-                            <Scorecard rounds={scorecardCache[p.espnId]} />
                           ) : (
                             <p className="text-xs text-masters-ink-4 dark:text-masters-d-ink-4">No scorecard available</p>
                           )}
