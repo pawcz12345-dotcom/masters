@@ -356,7 +356,7 @@ export default function PlayersTab({
     return competitors.map((c) => {
       const ourPlayer = playerByEspnId.get(c.athlete.id);
       const tier = ourPlayer ? (tierMap.get(ourPlayer.tierId) ?? null) : null;
-      const isCut = c.status?.type?.state === 'post' && status.period > 2 && (c.earnings ?? 0) === 0;
+      const isCut = (c.status?.type?.description ?? '').toLowerCase() === 'missed cut' && status.period > 2 && (c.earnings ?? 0) === 0;
 
       let oddsEV = evRecord[c.athlete.id] ?? 0;
       let oddsEVDisplay = oddsEV > 0 ? formatCurrency(oddsEV) : '—';
