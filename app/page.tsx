@@ -36,19 +36,37 @@ export default async function Home() {
   const tiers = tiersData.tiers as Tier[];
   const purse = purseData.payouts as PurseEntry[];
 
+  // When ESPN no longer carries the Masters (tournament over, API shifted to next event),
+  // fall back to the most recent saved snapshot so results remain visible instead of
+  // everyone appearing at T1 with $0.
+  let liveCompetitors = espn.competitors;
+  let liveStatus = espn.status;
+  let usedSnapshotFallback = false;
+
+  if (liveCompetitors.length === 0) {
+    for (const snap of [r4Raw, r3Raw, r2Raw, r1Raw] as RoundSnapshot[]) {
+      if (snap.saved && snap.status && snap.competitors?.length) {
+        liveCompetitors = snap.competitors!;
+        liveStatus = snap.status;
+        usedSnapshotFallback = true;
+        break;
+      }
+    }
+  }
+
   const liveStandings = computeStandings(
-    participants, players, tiers, espn.competitors, purse, espn.status, oddsEV
+    participants, players, tiers, liveCompetitors, purse, liveStatus, oddsEV
   );
 
   const evRecord: Record<string, number> = {};
   const cutProbRecord: Record<string, number> = {};
-  const livePlayerStats = computeLivePlayerStats(espn.competitors, purse, espn.status, oddsEV);
+  const livePlayerStats = computeLivePlayerStats(liveCompetitors, purse, liveStatus, oddsEV);
   for (const [k, v] of livePlayerStats) {
     evRecord[k] = v.oddsEV;
     cutProbRecord[k] = v.cutProbability;
   }
 
-  const liveProjectedMap = computeProjectedEarnings(espn.competitors, purse, espn.status);
+  const liveProjectedMap = computeProjectedEarnings(liveCompetitors, purse, liveStatus);
   const liveProjectedRecord: Record<string, number> = {};
   for (const [k, v] of liveProjectedMap) liveProjectedRecord[k] = v;
 
@@ -75,12 +93,14 @@ export default async function Home() {
   });
 
   const liveRound: RoundData = {
-    round: 99, label: 'Live', status: espn.status,
-    standings: liveStandings, competitors: espn.competitors,
+    round: 99, label: 'Live', status: liveStatus,
+    standings: liveStandings, competitors: liveCompetitors,
     evRecord, cutProbRecord, projectedRecord: liveProjectedRecord,
   };
 
-  const isLive = espn.status.state === 'in';
+  // Only auto-refresh when the tournament is genuinely in-progress via the live API.
+  // If we fell back to a saved snapshot the tournament is over — no refresh needed.
+  const isLive = !usedSnapshotFallback && espn.status.state === 'in';
 
   return (
     <main className="min-h-screen bg-masters-bg dark:bg-masters-d-bg">
@@ -99,7 +119,7 @@ export default async function Home() {
                 Masters Pool
               </h1>
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                {espn.status.state !== 'pre' && <TournamentStatus status={espn.status} />}
+                {liveStatus.state !== 'pre' && <TournamentStatus status={liveStatus} />}
                 <LastUpdated />
               </div>
             </div>
@@ -111,7 +131,7 @@ export default async function Home() {
           <TabView
             liveRound={liveRound}
             snapshotRounds={snapshotRounds}
-            currentStatus={espn.status}
+            currentStatus={liveStatus}
             players={players}
             tiers={tiers}
           />
