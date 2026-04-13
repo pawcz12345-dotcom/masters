@@ -85,9 +85,13 @@ export function computeProjectedEarnings(
   }
 
   if (status.state === 'post' && status.period >= 4) {
-    // Tournament complete — use real earnings
+    // Tournament complete — use real earnings; cut players get flat $25k payment
+    const CUT_PAYMENT = 25000;
     for (const c of competitors) {
-      projected.set(c.athlete.id, c.earnings ?? 0);
+      const earnings = c.earnings ?? 0;
+      const desc = (c.status?.type?.description ?? '').toLowerCase();
+      const isCut = earnings === 0 && desc === 'missed cut';
+      projected.set(c.athlete.id, isCut ? CUT_PAYMENT : earnings);
     }
     return projected;
   }
@@ -261,10 +265,10 @@ export function computeStandings(
           ? Math.max(0, linescoredCount - 1)
           : linescoredCount;
 
-        // Position-based projected (used for ranking + payout)
-        const projected = isTournamentComplete
-          ? earnings
-          : (projectedEarnings.get(player.espnId) ?? 0);
+        // Position-based projected (used for ranking + payout).
+        // Always use projectedEarnings — it handles the $25k cut payment for
+        // cut players even in the tournament-complete case.
+        const projected = projectedEarnings.get(player.espnId) ?? (isTournamentComplete ? earnings : 0);
 
         // Use ESPN's own status description to detect cut players — it is set
         // to 'Missed Cut' by ESPN and remains stable through R3/R4. Linescore
@@ -278,13 +282,11 @@ export function computeStandings(
         // reprice outright winner markets in near-real-time during the tournament.
         // Cut players earn the flat cut payment (reflected in `projected`).
         // Without odds (API unavailable) show 0 (→ "—").
-        const playerEV = isTournamentComplete
-          ? earnings
-          : isCut
-            ? projected
-            : oddsResult
-              ? (oddsResult.ev.get(player.espnId) ?? projected)
-              : 0;
+        const playerEV = (isTournamentComplete || isCut)
+          ? projected
+          : oddsResult
+            ? (oddsResult.ev.get(player.espnId) ?? projected)
+            : 0;
 
         // scoreToPar stat is the reliable cumulative to-par string ("-3", "E", "+1").
         // score.displayValue is unreliable: "-" for not-yet-started, wrong for active players.
@@ -418,13 +420,11 @@ export function computeLivePlayerStats(
     const scoreDisplay = rawScore === '-' ? 'E' : rawScore;
 
     const proj = projected.get(espnId) ?? 0;
-    const ev = isTournamentComplete
-      ? earnings
-      : isCut
-        ? proj
-        : oddsResult
-          ? (oddsResult.ev.get(espnId) ?? proj)
-          : 0;
+    const ev = (isTournamentComplete || isCut)
+      ? proj
+      : oddsResult
+        ? (oddsResult.ev.get(espnId) ?? proj)
+        : 0;
 
     const cutProb = status.state === 'pre'
       ? (oddsResult?.cutProb.get(espnId) ?? 0)
