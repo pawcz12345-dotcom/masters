@@ -24,13 +24,14 @@ export async function fetchESPNLeaderboard(): Promise<ESPNLeaderboardData> {
 
     const data = await res.json();
 
-    // Find the Masters event specifically (API shifts to next event after tournament)
-    const event =
-      data.events?.find((e: { name: string }) =>
-        e.name?.includes(TOURNAMENT_NAME)
-      ) ?? data.events?.[0];
+    // Find the Masters event specifically.
+    // Do NOT fall back to data.events?.[0] — after the tournament ESPN shifts to
+    // the next event and that wrong event's competitors would corrupt standings.
+    const event = data.events?.find((e: { name: string }) =>
+      e.name?.includes(TOURNAMENT_NAME)
+    );
 
-    if (!event) throw new Error('No event found in ESPN response');
+    if (!event) throw new Error('Masters Tournament not found in ESPN response');
 
     const competition = event.competitions?.[0];
     if (!competition) throw new Error('No competition found in ESPN event');

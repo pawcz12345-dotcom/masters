@@ -25,10 +25,10 @@ async function fetchESPN() {
   if (!res.ok) throw new Error(`ESPN ${res.status}`);
   const data = await res.json();
 
-  const event =
-    data.events?.find((e) => e.name?.includes('Masters Tournament')) ??
-    data.events?.[0];
-  if (!event) throw new Error('No Masters event');
+  // Do NOT fall back to data.events?.[0] — after the tournament ESPN shifts to
+  // the next event and saving that wrong event's data would corrupt the snapshot.
+  const event = data.events?.find((e) => e.name?.includes('Masters Tournament'));
+  if (!event) throw new Error('Masters Tournament not found in ESPN response — skipping snapshot');
 
   const competition = event.competitions?.[0];
   const status = {
